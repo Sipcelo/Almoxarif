@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsx -e ':*)",
+      "Bash(node test-conn.js)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push)",
+      "Bash(npx vitest:*)",
+      "Bash(npm uninstall *)",
+      "Bash(npx prisha *)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push --accept-data-loss --force-reset)",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(set DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test)",
+      "Bash(cmd /c \"set DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test && npx prisma db push --accept-data-loss\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push --accept-data-loss)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/tmp/vitest.json','utf8'\\);const m=d.match\\(/\\\\\"numTotalTests\\\\\":\\(\\\\d+\\),\\\\\"numPassedTests\\\\\":\\(\\\\d+\\),\\\\\"numFailedTests\\\\\":\\(\\\\d+\\)/\\);console.log\\(m&&m[0]\\)\")",
+      "Bash(npx vitest *)",
+      "Read(//tmp/**)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push --force-reset --accept-data-loss)"
+    ]
+  }
+}

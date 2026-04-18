@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  nome         String
+  email        String    @unique
+  senha        String
+  role         String    @default("operador")
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
+
+  sessions Session[]
+  auditLogs AuditLog[]
+  entradas Entrada[]
+  saidas   Saida[]
+  ajustes  Ajuste[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  expiresAt  DateTime @map("expires_at")
+  criadoEm   DateTime @default(now()) @map("criado_em")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  csrfToken  String   @map("csrf_token")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  target    String?
+  details   String?
+  ipAddress String?  @map("ip_address")
+  timestamp DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model Setor {
+  id           String   @id @default(uuid())
+  nome         String   @unique
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt      @map("atualizado_em")
+
+  funcionarios   Funcionario[]
+  saidasSnapshot Saida[]
+
+  @@map("setores")
+}
+
+model Categoria {
+  id           String   @id @default(uuid())
+  nome         String   @unique
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt      @map("atualizado_em")
+
+  items Item[]
+
+  @@map("categorias")
+}
+
+model Deposito {
+  id           String   @id @default(uuid())
+  nome         String   @unique
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt      @map("atualizado_em")
+
+  items Item[]
+
+  @@map("depositos")
+}
+
+model Funcionario {
+  id           String   @id @default(uuid())
+  nome         String
+  cargo        String
+  setorId      String   @map("setor_id")
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt      @map("atualizado_em")
+
+  setor  Setor   @relation(fields: [setorId], references: [id], onDelete: Restrict)
+  saidas Saida[]
+
+  @@index([setorId])
+  @@index([ativo])
+  @@map("funcionarios")
+}
+
+model Item {
+  id           String    @id @default(uuid())
+  codigo       String    @unique
+  descricao    String
+  categoriaId  String    @map("categoria_id")
+  depositoId   String    @map("deposito_id")
+  quantidade   Int       @default(0)
+  minimo       Int       @default(0)
+  valorAtual   Decimal   @default(0) @map("valor_atual") @db.Decimal(14, 2)
+  obs          String?
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
+
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  deposito  Deposito  @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  entradas  Entrada[]
+  saidas    Saida[]
+  ajustes   Ajuste[]
+
+  @@index([ativo, categoriaId, depositoId])
+  @@index([quantidade, minimo])
+  @@index([criadoEm])
+  @@map("items")
+}
+
+model Entrada {
+  id                String    @id @default(uuid())
+  itemId            String    @map("item_id")
+  qtd               Int
+  valorUnit         Decimal   @map("valor_unit") @db.Decimal(14, 2)
+  data              DateTime
+  responsavelUserId String    @map("responsavel_user_id")
+  obs               String?
+  criadoEm          DateTime  @default(now()) @map("criado_em")
+
+  item            Item @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  responsavelUser User @relation(fields: [responsavelUserId], references: [id], onDelete: Restrict)
+
+  @@index([itemId])
+  @@index([data])
+  @@index([responsavelUserId])
+  @@index([criadoEm])
+  @@map("entradas")
+}
+
+model Saida {
+  id                String    @id @default(uuid())
+  itemId            String    @map("item_id")
+  qtd               Int
+  valorUnit         Decimal   @map("valor_unit") @db.Decimal(14, 2)
+  data              DateTime
+  funcionarioId     String    @map("funcionario_id")
+  setorSnapshotId   String?   @map("setor_snapshot_id")
+  setorSnapshotNome String    @map("setor_snapshot_nome")
+  responsavelUserId String    @map("responsavel_user_id")
+  obs               String?
+  criadoEm          DateTime  @default(now()) @map("criado_em")
+
+  item            Item        @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  funcionario     Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Restrict)
+  setorSnapshot   Setor?      @relation(fields: [setorSnapshotId], references: [id], onDelete: SetNull)
+  responsavelUser User        @relation(fields: [responsavelUserId], references: [id], onDelete: Restrict)
+
+  @@index([itemId])
+  @@index([funcionarioId])
+  @@index([data])
+  @@index([setorSnapshotId])
+  @@index([responsavelUserId])
+  @@index([criadoEm])
+  @@map("saidas")
+}
+
+model Ajuste {
+  id                String    @id @default(uuid())
+  itemId            String    @map("item_id")
+  qtdAnterior       Int       @map("qtd_anterior")
+  qtdNova           Int       @map("qtd_nova")
+  motivo            String
+  responsavelUserId String    @map("responsavel_user_id")
+  obs               String?
+  criadoEm          DateTime  @default(now()) @map("criado_em")
+
+  item            Item @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  responsavelUser User @relation(fields: [responsavelUserId], references: [id], onDelete: Restrict)
+
+  @@index([itemId])
+  @@index([responsavelUserId])
+  @@index([criadoEm])
+  @@map("ajustes")
+}
