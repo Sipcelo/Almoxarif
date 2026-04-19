@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-18 (pós PR-2 SDD-004: apiClient + frontend-test infra + refactor login)
+> **Última atualização:** 2026-04-18 (pós PR-3 SDD-004: refactor Painel/Dashboard via apiClient)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -30,7 +30,7 @@
 | **SDD-001-FIX** | Correção DV1/DV3/DV4/DV5/DV7 + clean-code zero-débito (Bloco E: paginação de users) | ✅ **CONCLUÍDO** | 46 (cumulativo) | `RELATORIO-TESTES-SPEC-001.md` Blocos A-E |
 | **SDD-002** | Employees + Settings (Funcionários, Setores, Categorias, Depósitos) | ✅ **CONCLUÍDO** | 78 (cumulativo, +32) | `docs/SDD-002-employees-settings.md`, Bloco F |
 | **SDD-003** | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | ✅ **CONCLUÍDO** | 160 (cumulativo, +27) | `docs/SDD-003-Inv-Stock.md`, `docs/SDD-003-DESIGN-Inv-Stock.md`, Bloco H |
-| **SDD-004** | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | 🚧 **Em progresso** (PR-1 CSRF + PR-2 apiClient/login concluídos) | 20 (+8 CSRF backend, +61 frontend, −41 cumul) | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/auth.js`, `e2e/tests/01-login.spec.ts` |
+| **SDD-004** | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | 🚧 **Em progresso** (PR-1 CSRF + PR-2 login + PR-3 Painel) | 170 backend + 61 frontend | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/auth.js`, `front/js/pages/dashboard.js`, `e2e/tests/01-login.spec.ts`, `e2e/tests/02-painel.spec.ts` |
 | **SDD-005** | Reports + Audit endpoints | ⏸ Pendente | — | — |
 | **SDD-006** | Deploy + Observabilidade | ⏸ Pendente | — | — |
 

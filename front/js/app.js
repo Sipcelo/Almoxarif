@@ -89,7 +89,13 @@ const App = {
       usuarios:      () => PageUsuarios.render(),
       configuracoes: () => PageConfig.render(),
     };
-    renderers[name]?.();
+    const result = renderers[name]?.();
+    if (result && typeof result.catch === 'function') {
+      result.catch(err => {
+        const msg = (err && err.message) || 'Falha ao renderizar página.';
+        Utils.notify(msg, 'error');
+      });
+    }
     this.updateBadges();
     const panel = document.getElementById('alert-panel');
     if (panel) panel.style.display = 'none';
