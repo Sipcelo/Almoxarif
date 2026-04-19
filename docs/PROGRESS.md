@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-18
+> **Última atualização:** 2026-04-18 (pós PR-1 SDD-004: CSRF double-submit)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -12,8 +12,8 @@
 |---------|-------|
 | SDDs concluídos | **3 de 6** (SDD-001 + SDD-002 + SDD-003; SDD-001-FIX concluído como adendo) |
 | SDDs pendentes | 3 (SDD-004, SDD-005, SDD-006) |
-| Testes totais | **162/162 passando** |
-| Arquivos de teste | 37 |
+| Testes totais | **170/170 passando** |
+| Arquivos de teste | 38 |
 | Testes `skip`/`todo` | 0 |
 | Tempo de execucao da suite | ~52s |
 | TypeScript `tsc --noEmit` | ✅ limpo |
@@ -190,7 +190,8 @@ Todas as entidades do frontend (`alm_items`, `alm_entradas`, `alm_saidas`, `alm_
 | G — SDD-TEST-002A (hardening) | `auth-hardening`, `session-hardening`, `infra-failure`, `validation-hardening`, `payload-abuse-*`, `audit-negative-paths` (7 arquivos) | 55 |
 | H — SDD-003 | `items-*`, `entradas`, `saidas`, `ajustes`, `stock-*` (9 arquivos) | 27 |
 | Reconciliação 2026-04-18 | `session-hardening` 7 → 8 + ajuste de soma em Bloco G | +2 |
-| **TOTAL** | **37 arquivos** | **162** |
+| I — SDD-004 PR-1 (CSRF) | `csrf.test.ts` | 8 |
+| **TOTAL** | **38 arquivos** | **170** |
 
 ### Comando canônico
 
@@ -206,7 +207,7 @@ $env:DATABASE_URL="postgresql://postgres:123456@localhost:5432/almox_test"
 npx vitest run --reporter=basic
 ```
 
-**Resultado esperado:** `Test Files 37 passed (37) | Tests 162 passed (162)`.
+**Resultado esperado:** `Test Files 38 passed (38) | Tests 170 passed (170)`.
 
 ---
 
@@ -247,7 +248,7 @@ Escopo imediato:
 
 1. **SDD rigoroso** — toda demanda passa por SPEC → aprovação → DESIGN → implementação (§11 do CLAUDE.md)
 2. **Zero débito técnico** — nenhum SDD fecha com débito em aberto (diretriz do usuário em 2026-04-16)
-3. **Regressão zero** — inventário de 162 testes deve continuar passando integralmente
+3. **Regressão zero** — inventário de 170 testes deve continuar passando integralmente
 4. **Migração incremental** — frontend permanece até SDD-004; nada é quebrado sem substituto pronto
 5. **Sem framework frontend** — frontend puro mantido até decisão explícita em contrário
 6. **Mensagens em português** — toda resposta de erro visível ao usuário final

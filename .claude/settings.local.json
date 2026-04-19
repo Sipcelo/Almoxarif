@@ -20,7 +20,8 @@
       "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/tmp/vitest.json','utf8'\\);const m=d.match\\(/\\\\\"numTotalTests\\\\\":\\(\\\\d+\\),\\\\\"numPassedTests\\\\\":\\(\\\\d+\\),\\\\\"numFailedTests\\\\\":\\(\\\\d+\\)/\\);console.log\\(m&&m[0]\\)\")",
       "Bash(npx vitest *)",
       "Read(//tmp/**)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push --force-reset --accept-data-loss)"
+      "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push --force-reset --accept-data-loss)",
+      "Bash(tee /tmp/vitest-final.log)"
     ]
   }
 }

@@ -78,10 +78,11 @@ describe("Auth — login/logout/me", () => {
       payload: { email: ADMIN_EMAIL, senha: ADMIN_SENHA },
     });
     const sid = extractSid(login.headers["set-cookie"])!;
+    const csrfToken = (JSON.parse(login.body) as { csrfToken: string }).csrfToken;
     const logout = await app.inject({
       method: "POST",
       url: "/api/v1/auth/logout",
-      headers: { cookie: `almox_sid=${sid}` },
+      headers: { cookie: `almox_sid=${sid}`, "x-almox-csrf": csrfToken },
     });
     expect(logout.statusCode).toBe(200);
     expect(logout.json()).toMatchObject({ message: "Sessão encerrada" });

@@ -14,17 +14,17 @@
 ## Resultado Geral
 
 ```
-Test Files  37 passed (37)
-     Tests  162 passed (162)
+Test Files  38 passed (38)
+     Tests  170 passed (170)
 ```
 
 | Métrica | Valor |
 |---------|-------|
-| Arquivos de teste | 37 |
-| Arquivos passando | 37 |
+| Arquivos de teste | 38 |
+| Arquivos passando | 38 |
 | Arquivos falhando | 0 |
-| Testes totais | 162 |
-| Testes passando | 162 |
+| Testes totais | 170 |
+| Testes passando | 170 |
 | Testes falhando | 0 |
 | Testes `skip`/`todo` | 0 |
 
@@ -32,6 +32,7 @@ Test Files  37 passed (37)
 > **Atualização 2026-04-17 (SDD-002 concluído):** 32 testes somados (Funcionários + Settings). Detalhes em Bloco F.
 > **Atualização 2026-04-17 (SDD-003 concluído):** 27 testes somados em 9 arquivos (Inventory + Stock Movements). Detalhes em Bloco H.
 > **Atualização 2026-04-18 (reconciliação):** contagem revisada 160 → 162 (sem novos arquivos; `session-hardening` registrou 8 testes e a soma do Bloco G foi ajustada).
+> **Atualização 2026-04-18 (SDD-004 PR-1 CSRF):** +1 arquivo (`csrf.test.ts`, 8 testes). Total 162 → 170 em 38 arquivos. Session.csrfToken + double-submit pattern (cookie `almox_csrf` + header `x-almox-csrf`) + novo código `CSRF_ERROR`.
 Nota CA-I2 e CA-I3 sao cenarios de boot e infra que exigem manipulacao de env vars na suite e nao foram cobertos nesta iteracao registrar como debito tecnico
 
 ---
@@ -288,11 +289,11 @@ npx vitest run --reporter=basic
 DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test npx vitest run --reporter=basic
 ```
 
-**Resultado esperado** (baseline 2026-04-17, pós SDD-003):
+**Resultado esperado** (baseline 2026-04-18, pós SDD-004 PR-1 CSRF):
 ```
-Test Files  37 passed (37)
-     Tests  162 passed (162)
-  Duration  ~52s
+Test Files  38 passed (38)
+     Tests  170 passed (170)
+  Duration  ~58s
 ```
 
 ### Critério de regressão

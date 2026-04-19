@@ -9,9 +9,56 @@ export const ADMIN_EMAIL = "admin@rodoviariapel.com";
 export const ADMIN_SENHA = "admin2026";
 export const ADMIN_NOME = "Administrador";
 
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const csrfByCookie = new Map<string, string>();
+
+export function rememberCsrf(cookie: string, csrfToken: string): void {
+  csrfByCookie.set(cookie, csrfToken);
+}
+
+export function getCsrfFor(cookie: string): string | undefined {
+  return csrfByCookie.get(cookie);
+}
+
+export function authHeaders(cookie: string): Record<string, string> {
+  const csrf = csrfByCookie.get(cookie);
+  if (!csrf) throw new Error(`CSRF token nao registrado para cookie: ${cookie}`);
+  return { cookie, "x-almox-csrf": csrf };
+}
+
 export async function createApp(): Promise<FastifyInstance> {
   const app = await buildApp();
   await app.ready();
+
+  // Auto-injeta x-almox-csrf em chamadas mutating com cookie conhecido,
+  // desde que o teste nao tenha passado o header explicitamente (permite
+  // testes negativos de CSRF definirem o header como "", null ou valor invalido).
+  const appAny = app as unknown as { inject: (...args: unknown[]) => unknown };
+  const originalInject = appAny.inject.bind(app);
+  appAny.inject = (...args: unknown[]) => {
+    const opts = args[0];
+    if (opts && typeof opts === "object") {
+      const o = opts as {
+        method?: string;
+        headers?: Record<string, unknown>;
+      };
+      const method = (o.method || "GET").toUpperCase();
+      const headers = o.headers || {};
+      const cookie = headers.cookie;
+      if (
+        MUTATING_METHODS.has(method) &&
+        typeof cookie === "string" &&
+        !("x-almox-csrf" in headers)
+      ) {
+        const csrf = csrfByCookie.get(cookie);
+        if (csrf) {
+          o.headers = { ...headers, "x-almox-csrf": csrf };
+        }
+      }
+    }
+    return originalInject(...args);
+  };
+
   return app;
 }
 
@@ -178,7 +225,14 @@ export async function login(
   }
   const sid = extractSid(response.headers["set-cookie"]);
   if (!sid) throw new Error("Cookie almox_sid não encontrado");
-  return buildCookie(sid);
+  const cookie = buildCookie(sid);
+  try {
+    const body = JSON.parse(response.body) as { csrfToken?: string };
+    if (body.csrfToken) rememberCsrf(cookie, body.csrfToken);
+  } catch {
+    // body sem csrf — deixa seguir; testes que precisem falharao explicitamente
+  }
+  return cookie;
 }
 
 export async function loginAsAdmin(app: FastifyInstance): Promise<string> {

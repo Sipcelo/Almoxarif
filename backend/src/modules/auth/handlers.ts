@@ -9,6 +9,8 @@ import {
   TTL_MS,
   setSessionCookie,
   clearSessionCookie,
+  setCsrfCookie,
+  clearCsrfCookie,
 } from "../../config/session";
 
 function ipOf(req: FastifyRequest): string | null {
@@ -66,6 +68,7 @@ export const loginHandler = async (
   });
 
   setSessionCookie(reply, session.id);
+  setCsrfCookie(reply, csrfToken);
 
   return reply.send({
     user: {
@@ -74,6 +77,7 @@ export const loginHandler = async (
       email: user.email,
       role: user.role as Role,
     },
+    csrfToken,
   });
 };
 
@@ -100,9 +104,13 @@ export const logoutHandler = async (
   });
 
   clearSessionCookie(reply);
+  clearCsrfCookie(reply);
   return reply.send({ message: "Sessão encerrada" });
 };
 
 export const meHandler = async (req: FastifyRequest, reply: FastifyReply) => {
-  return reply.send({ user: req.user });
+  return reply.send({
+    user: req.user,
+    csrfToken: req.sessionCsrfToken,
+  });
 };
