@@ -1,4 +1,12 @@
 {
   "name": "almox-workspace",
-  "private": true
+  "private": true,
+  "scripts": {
+    "test:frontend": "vitest run --config vitest.config.frontend.ts",
+    "test:frontend:watch": "vitest --config vitest.config.frontend.ts"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.1",
+    "jsdom": "^24.0.0"
+  }
 }

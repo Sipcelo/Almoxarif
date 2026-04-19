@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-18 (pós PR-1 SDD-004: CSRF double-submit)
+> **Última atualização:** 2026-04-18 (pós PR-2 SDD-004: apiClient + frontend-test infra + refactor login)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -12,8 +12,8 @@
 |---------|-------|
 | SDDs concluídos | **3 de 6** (SDD-001 + SDD-002 + SDD-003; SDD-001-FIX concluído como adendo) |
 | SDDs pendentes | 3 (SDD-004, SDD-005, SDD-006) |
-| Testes totais | **170/170 passando** |
-| Arquivos de teste | 38 |
+| Testes totais | **231/231 passando** (170 backend + 61 frontend apiClient) |
+| Arquivos de teste | 39 (38 backend + 1 frontend) |
 | Testes `skip`/`todo` | 0 |
 | Tempo de execucao da suite | ~52s |
 | TypeScript `tsc --noEmit` | ✅ limpo |
@@ -30,7 +30,7 @@
 | **SDD-001-FIX** | Correção DV1/DV3/DV4/DV5/DV7 + clean-code zero-débito (Bloco E: paginação de users) | ✅ **CONCLUÍDO** | 46 (cumulativo) | `RELATORIO-TESTES-SPEC-001.md` Blocos A-E |
 | **SDD-002** | Employees + Settings (Funcionários, Setores, Categorias, Depósitos) | ✅ **CONCLUÍDO** | 78 (cumulativo, +32) | `docs/SDD-002-employees-settings.md`, Bloco F |
 | **SDD-003** | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | ✅ **CONCLUÍDO** | 160 (cumulativo, +27) | `docs/SDD-003-Inv-Stock.md`, `docs/SDD-003-DESIGN-Inv-Stock.md`, Bloco H |
-| **SDD-004** | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | ⏸ Pendente | — | — |
+| **SDD-004** | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | 🚧 **Em progresso** (PR-1 CSRF + PR-2 apiClient/login concluídos) | 20 (+8 CSRF backend, +61 frontend, −41 cumul) | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/auth.js`, `e2e/tests/01-login.spec.ts` |
 | **SDD-005** | Reports + Audit endpoints | ⏸ Pendente | — | — |
 | **SDD-006** | Deploy + Observabilidade | ⏸ Pendente | — | — |
 

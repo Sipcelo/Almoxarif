@@ -12,10 +12,15 @@ const App = {
     {text:'<strong>Elisa Gomes</strong>: Retirada de Caneta Esferográfica — Adm.',     color:'red',  time:'Hoje'},
   ],
 
-  init() {
+  async init() {
     initStore();
-    if (Auth.init()) { this.showAppPage(); }
-    else             { this.showLoginPage(); }
+    window.addEventListener('almox:session-expired', () => {
+      Auth.currentUser = null;
+      this.showLoginPage(true);
+    });
+    const ok = await Auth.init();
+    if (ok) { this.showAppPage(); }
+    else    { this.showLoginPage(); }
     document.addEventListener('click', e => {
       const panel = document.getElementById('alert-panel');
       const notif  = document.querySelector('.topbar-notif');
@@ -25,9 +30,13 @@ const App = {
     });
   },
 
-  showLoginPage() {
+  showLoginPage(expired) {
     document.getElementById('login-shell').style.display = '';
     document.getElementById('app-shell').style.display   = 'none';
+    const banner = document.getElementById('login-expired-banner');
+    if (banner) banner.style.display = expired ? '' : 'none';
+    const err = document.getElementById('login-error');
+    if (err) err.classList.remove('show');
   },
 
   showAppPage() {
@@ -147,19 +156,38 @@ const App = {
     }
   },
 
-  handleLogin(e) {
+  async handleLogin(e) {
     e && e.preventDefault();
-    const email=document.getElementById('login-email').value.trim();
-    const senha=document.getElementById('login-senha').value;
-    const btn=document.getElementById('login-btn');
-    const err=document.getElementById('login-error');
-    if (!email||!senha){err.classList.add('show');document.getElementById('login-error-msg').textContent='Preencha e-mail e senha.';return;}
-    btn.classList.add('loading');err.classList.remove('show');
-    setTimeout(()=>{
-      const ok=Auth.login(email,senha);btn.classList.remove('loading');
-      if(ok){this.showAppPage();}
-      else{err.classList.add('show');document.getElementById('login-error-msg').textContent='E-mail ou senha incorretos.';document.getElementById('login-senha').value='';}
-    },650);
+    const email = document.getElementById('login-email').value.trim();
+    const senha = document.getElementById('login-senha').value;
+    const btn   = document.getElementById('login-btn');
+    const err   = document.getElementById('login-error');
+    const msg   = document.getElementById('login-error-msg');
+    if (!email || !senha) {
+      err.classList.add('show');
+      msg.textContent = 'Preencha e-mail e senha.';
+      return;
+    }
+    btn.classList.add('loading');
+    err.classList.remove('show');
+    const banner = document.getElementById('login-expired-banner');
+    if (banner) banner.style.display = 'none';
+    const res = await Auth.login(email, senha);
+    btn.classList.remove('loading');
+    if (res.ok) {
+      this.showAppPage();
+      return;
+    }
+    err.classList.add('show');
+    const friendly = {
+      INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
+      RATE_LIMITED: 'Muitas tentativas. Aguarde alguns instantes.',
+      VALIDATION_ERROR: 'Dados inválidos. Verifique e tente novamente.',
+      NETWORK_ERROR: 'Falha de conexão. Tente novamente.',
+      TIMEOUT: 'Tempo de resposta esgotado. Tente novamente.',
+    };
+    msg.textContent = friendly[res.code] || res.message || 'Erro inesperado.';
+    document.getElementById('login-senha').value = '';
   },
 
   togglePassword() {

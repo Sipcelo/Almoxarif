@@ -1,49 +1,63 @@
 /* ============================================================
-   ALMOXARIFADO — Auth Module v3
+   ALMOXARIFADO — Auth Module v4 (SDD-004 PR-2)
+   Server-side authentication via apiClient.
+   Frontend keeps only the in-memory currentUser + can()/isAdmin()
+   helpers. Session lives server-side (cookie almox_sid).
    ============================================================ */
 
 const Auth = {
   currentUser: null,
 
-  init() {
-    const saved = Store.getSession();
-    if (saved) {
-      // Refresh from store (role/ativo may have changed)
-      const users = Store.getUsers();
-      const fresh = users.find(u => u.id === saved.id && u.ativo !== false);
-      if (fresh) {
-        this.currentUser = this._toSession(fresh);
-        Store.setSession(this.currentUser);
-        return true;
+  async init() {
+    try {
+      const res = await apiClient.auth.me();
+      const user = res && res.user ? res.user : null;
+      if (!user || user.ativo === false) {
+        this.currentUser = null;
+        return false;
       }
-      Store.clearSession();
+      this.currentUser = this._toSession(user);
+      return true;
+    } catch (_err) {
+      this.currentUser = null;
+      return false;
     }
-    return false;
   },
 
-  login(email, senha) {
-    const users = Store.getUsers();
-    const user  = users.find(u => u.email === email && u.senha === senha && u.ativo !== false);
-    if (!user) return false;
-    this.currentUser = this._toSession(user);
-    Store.setSession(this.currentUser);
-    return true;
+  async login(email, senha) {
+    try {
+      const res = await apiClient.auth.login(email, senha);
+      const user = res && res.user ? res.user : null;
+      if (!user) return { ok: false, code: "UNKNOWN", message: "Resposta inválida do servidor." };
+      this.currentUser = this._toSession(user);
+      return { ok: true };
+    } catch (err) {
+      const code = err && err.code ? err.code : "UNKNOWN";
+      const message = err && err.message ? err.message : "Erro inesperado.";
+      return { ok: false, code, message };
+    }
   },
 
-  logout() {
-    Store.clearSession();
+  async logout() {
+    try {
+      await apiClient.auth.logout();
+    } catch (_err) {
+      // Mesmo com falha, limpa a sessão local e leva para login.
+    }
     this.currentUser = null;
     App.showLoginPage();
   },
 
   _toSession(u) {
-    return { id:u.id, nome:u.nome, email:u.email, role:u.role };
+    return { id: u.id, nome: u.nome, email: u.email, role: u.role };
   },
 
   can(page) {
-    const role = this.currentUser?.role || 'visitante';
+    const role = (this.currentUser && this.currentUser.role) || "visitante";
     return (PERMISSIONS[role] || []).includes(page);
   },
 
-  isAdmin() { return this.currentUser?.role === 'admin'; },
+  isAdmin() {
+    return !!(this.currentUser && this.currentUser.role === "admin");
+  },
 };

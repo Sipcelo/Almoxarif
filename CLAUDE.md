@@ -446,7 +446,7 @@ Com base na análise do estado atual, a sequência sugerida de evolução é:
 | SDD-001-FIX | Correção dos desvios DV1/DV3/DV4/DV5/DV7 detectados no relatório. 40/40 testes passando em 12 arquivos. | **CONCLUÍDO** | `docs/RELATORIO-TESTES-SPEC-001.md`, `backend/test/**` |
 | SDD-002 | Employees + Settings (Funcionários, Categorias, Depósitos, Setores) | **CONCLUÍDO** | `docs/SDD-002-employees-settings.md`, `backend/src/modules/funcionarios/**`, `backend/src/modules/settings/**`, 78/78 testes em 21 arquivos (Bloco F) |
 | SDD-003 | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | **CONCLUÍDO** | `docs/SDD-003-Inv-Stock.md`, `backend/src/modules/inventory/**`, `backend/src/modules/stock-movements/**` (Bloco H) |
-| SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | Em progresso (PR-1 CSRF concluído — 170/170) | `docs/SDD-004-frontend-integration.md`, `docs/SDD-004-DESIGN-frontend-integration.md`, `backend/src/shared/middleware/require-csrf.ts`, `backend/test/csrf.test.ts` |
+| SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | Em progresso (PR-1 CSRF + PR-2 apiClient/login — 170 backend + 61 frontend = 231/231) | `docs/SDD-004-frontend-integration.md`, `docs/SDD-004-DESIGN-frontend-integration.md`, `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/auth.js`, `e2e/tests/01-login.spec.ts` |
 | SDD-005 | Reports + Audit endpoints | Pendente | — |
 | SDD-006 | Deploy + Observabilidade | Pendente | — |
 

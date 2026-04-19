@@ -310,6 +310,13 @@
           </p>
         </div>
         <form class="login-form" onsubmit="App.handleLogin(event)">
+          <div class="login-expired" id="login-expired-banner" style="display:none" role="status" aria-live="polite">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>Sua sessão expirou. Faça login novamente.</span>
+          </div>
           <div class="login-error" id="login-error">
             <svg viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" />
@@ -2146,6 +2153,7 @@
 
     <div class="notif" id="notif"></div>
 
+    <script src="apiClient.js"></script>
     <script src="front/js/data.js"></script>
     <script src="front/js/utils.js"></script>
     <script src="front/js/auth.js"></script>

@@ -273,6 +273,21 @@
 .login-error.show { display: flex; animation: fadeIn 0.2s ease; }
 .login-error svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
 
+.login-expired {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  background: var(--amber-bg, #fff7ed);
+  border: 1px solid var(--amber-border, #fed7aa);
+  border-radius: var(--r);
+  font-size: 13px;
+  color: var(--amber, #9a3412);
+  animation: fadeIn 0.2s ease;
+}
+.login-expired svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
+
 .login-hint {
   margin-top: 24px;
   padding: 14px;
