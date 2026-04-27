@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
 }
 
 datasource db {
@@ -22,8 +23,28 @@ model User {
   entradas Entrada[]
   saidas   Saida[]
   ajustes  Ajuste[]
+  acessos  Acesso[]
 
   @@map("users")
+}
+
+model Acesso {
+  id                String   @id @default(uuid())
+  nome              String
+  tipo              String
+  hora              String
+  data              DateTime
+  cargo             String?
+  responsavelUserId String   @map("responsavel_user_id")
+  criadoEm          DateTime @default(now()) @map("criado_em")
+
+  responsavelUser User @relation(fields: [responsavelUserId], references: [id], onDelete: Restrict)
+
+  @@index([data])
+  @@index([tipo])
+  @@index([responsavelUserId])
+  @@index([criadoEm])
+  @@map("acessos")
 }
 
 model Session {

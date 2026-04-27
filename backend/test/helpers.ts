@@ -64,6 +64,7 @@ export async function createApp(): Promise<FastifyInstance> {
 
 export async function cleanDatabase() {
   await prisma.auditLog.deleteMany();
+  await prisma.acesso.deleteMany();
   await prisma.ajuste.deleteMany();
   await prisma.saida.deleteMany();
   await prisma.entrada.deleteMany();

@@ -12,6 +12,7 @@
   const CSRF_HEADER = "x-almox-csrf";
   const CSRF_COOKIE = "almox_csrf";
   const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+  const CSRF_EXEMPT_PATHS = new Set(["/auth/login"]);
 
   class ApiError extends Error {
     constructor(opts) {
@@ -41,12 +42,17 @@
     return `?${pairs.join("&")}`;
   }
 
+  function requiresCsrf(method, path) {
+    if (!MUTATING.has(method)) return false;
+    return !CSRF_EXEMPT_PATHS.has(path);
+  }
+
   async function http(method, path, body) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     const headers = { "Content-Type": "application/json" };
-    if (MUTATING.has(method)) {
+    if (requiresCsrf(method, path)) {
       const token = csrfFromCookie();
       if (!token) {
         clearTimeout(timer);
@@ -138,7 +144,9 @@
       update: (id, payload) =>
         http("PUT", `/users/${encodeURIComponent(id)}`, payload),
       updatePassword: (id, senha) =>
-        http("PATCH", `/users/${encodeURIComponent(id)}/password`, { senha }),
+        http("PATCH", `/users/${encodeURIComponent(id)}/password`, {
+          novaSenha: senha,
+        }),
       remove: (id) => http("DELETE", `/users/${encodeURIComponent(id)}`),
     },
     funcionarios: crudFactory("/funcionarios"),
@@ -157,6 +165,10 @@
     ajustes: {
       list: (params) => http("GET", `/ajustes${qs(params)}`),
       create: (payload) => http("POST", "/ajustes", payload),
+    },
+    acessos: {
+      list: (params) => http("GET", `/acessos${qs(params)}`),
+      create: (payload) => http("POST", "/acessos", payload),
     },
     health: () => http("GET", "/health"),
   };

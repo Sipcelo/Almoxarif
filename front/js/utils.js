@@ -101,21 +101,87 @@ const Utils = {
   },
 
   // ---- EXPORT JSON ----
-  exportJSON() {
-    const data = {
-      items: Store.getItems(),
-      entradas: Store.getEntradas(),
-      saidas: Store.getSaidas(),
-      acessos: Store.getAcessos(),
-      categorias: Store.getCategorias(),
-      depositos: Store.getDepositos(),
-      exportedAt: new Date().toISOString(),
+  async exportJSON() {
+    const extractRows = (payload, key) => {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return [];
+      const rows = payload[key];
+      return Array.isArray(rows) ? rows : [];
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `almoxarifado_${Utils.today()}.json`;
-    a.click();
-    Utils.notify('Dados exportados com sucesso!');
+
+    const extractTotalPages = (payload) => {
+      if (!payload || typeof payload !== "object" || !payload.meta) return 1;
+      const raw = Number(payload.meta.totalPages);
+      if (!Number.isFinite(raw) || raw < 1) return 1;
+      return Math.floor(raw);
+    };
+
+    const listAll = async (fetchPage, key, baseParams = {}) => {
+      const limit = 100;
+      const first = await fetchPage({ ...baseParams, page: 1, limit });
+      const rows = extractRows(first, key);
+      const totalPages = extractTotalPages(first);
+      if (totalPages <= 1) return rows;
+
+      const chunks = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, idx) =>
+          fetchPage({ ...baseParams, page: idx + 2, limit })
+        )
+      );
+
+      const all = [...rows];
+      for (const payload of chunks) {
+        all.push(...extractRows(payload, key));
+      }
+      return all;
+    };
+
+    try {
+      const [dadosRelatorios, usersRaw, funcionariosRaw, categoriasRaw, depositosRaw, setoresRaw] =
+        await Promise.all([
+          PageRelatorios.getData(true),
+          listAll((params) => apiClient.users.list(params), "users"),
+          listAll((params) => apiClient.funcionarios.list(params), "funcionarios"),
+          listAll((params) => apiClient.categorias.list(params), "categorias"),
+          listAll((params) => apiClient.depositos.list(params), "depositos"),
+          listAll((params) => apiClient.setores.list(params), "setores"),
+        ]);
+
+      const acessos = PageAcesso.fetchAll();
+      const data = {
+        users: usersRaw.map((u) => ({
+          id: u.id,
+          nome: u.nome,
+          email: u.email,
+          role: u.role,
+          ativo: u.ativo !== false,
+        })),
+        funcionarios: funcionariosRaw.map((f) => ({
+          id: f.id,
+          nome: f.nome,
+          cargo: f.cargo,
+          setor: f?.setor?.nome || "",
+          ativo: f.ativo !== false,
+        })),
+        items: dadosRelatorios.items || [],
+        entradas: dadosRelatorios.entradas || [],
+        saidas: dadosRelatorios.saidas || [],
+        acessos,
+        categorias: categoriasRaw.map((c) => c.nome).filter(Boolean),
+        depositos: depositosRaw.map((d) => d.nome).filter(Boolean),
+        setores: setoresRaw.map((s) => s.nome).filter(Boolean),
+        exportedAt: new Date().toISOString(),
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `almoxarifado_${Utils.today()}.json`;
+      a.click();
+      Utils.notify("Dados exportados com sucesso!");
+    } catch (err) {
+      const msg = (err && err.message) || "Falha ao exportar dados.";
+      Utils.notify(msg, "error");
+    }
   },
 };

@@ -1,9 +1,15 @@
-﻿# Relatório de Testes — SDD-001 (pós SDD-001-FIX)
+# Relatório de Testes — Almox (baseline acumulado até SDD-006)
 
-**Data de execução:** 2026-04-16
+**Data de execução:** 2026-04-26
 **Documentos referência:**
 - [SDD-001-bootstrap-auth-users.md](./SDD-001-bootstrap-auth-users.md)
 - [SDD-001-FIX-correcao-desvios.md](./SDD-001-FIX-correcao-desvios.md)
+- [SDD-002-employees-settings.md](./SDD-002-employees-settings.md)
+- [SDD-003-Inv-Stock.md](./SDD-003-Inv-Stock.md)
+- [SDD-004-frontend-integration.md](./SDD-004-frontend-integration.md)
+- [SDD-005-reports-audit.md](./SDD-005-reports-audit.md)
+- [SDD-006-deploy-observabilidade.md](./SDD-006-deploy-observabilidade.md)
+- [SDD-006-DESIGN-deploy-observabilidade.md](./SDD-006-DESIGN-deploy-observabilidade.md)
 
 **Runner:** Vitest v1.6.1
 **Banco:** PostgreSQL `almox_test` em `localhost:5432`
@@ -14,17 +20,17 @@
 ## Resultado Geral
 
 ```
-Test Files  38 passed (38)
-     Tests  170 passed (170)
+Test Files  48 passed (48)
+     Tests  232 passed (232)
 ```
 
 | Métrica | Valor |
 |---------|-------|
-| Arquivos de teste | 38 |
-| Arquivos passando | 38 |
+| Arquivos de teste | 48 |
+| Arquivos passando | 48 |
 | Arquivos falhando | 0 |
-| Testes totais | 170 |
-| Testes passando | 170 |
+| Testes totais | 232 |
+| Testes passando | 232 |
 | Testes falhando | 0 |
 | Testes `skip`/`todo` | 0 |
 
@@ -33,7 +39,11 @@ Test Files  38 passed (38)
 > **Atualização 2026-04-17 (SDD-003 concluído):** 27 testes somados em 9 arquivos (Inventory + Stock Movements). Detalhes em Bloco H.
 > **Atualização 2026-04-18 (reconciliação):** contagem revisada 160 → 162 (sem novos arquivos; `session-hardening` registrou 8 testes e a soma do Bloco G foi ajustada).
 > **Atualização 2026-04-18 (SDD-004 PR-1 CSRF):** +1 arquivo (`csrf.test.ts`, 8 testes). Total 162 → 170 em 38 arquivos. Session.csrfToken + double-submit pattern (cookie `almox_csrf` + header `x-almox-csrf`) + novo código `CSRF_ERROR`.
-Nota CA-I2 e CA-I3 sao cenarios de boot e infra que exigem manipulacao de env vars na suite e nao foram cobertos nesta iteracao registrar como debito tecnico
+> **Atualização 2026-04-20 (SDD-004 Addendum A - Acessos):** +1 arquivo (`acessos.test.ts`, 5 testes). Total 170 → 175 em 39 arquivos.
+> **Atualização 2026-04-20 (SDD-004 PR-9 - Import legacy):** +1 arquivo (`import-legacy.test.ts`, 5 testes). Total 175 → 180 em 40 arquivos.
+> **Atualização 2026-04-24 (SDD-005 Reports + Audit):** +2 arquivos (`reports.test.ts`, `audit-query.test.ts`), 33 testes. Total 180 → 213 em 42 arquivos.
+> **Atualização 2026-04-26 (SDD-006 Deploy + Observabilidade):** +6 arquivos (`production-env.test.ts`, `health-readiness.test.ts`, `security-headers.test.ts`, `production-cookies.test.ts`, `logging-production.test.ts`, `graceful-shutdown.test.ts`), 19 testes. Total 213 → 232 em 48 arquivos. `npm --prefix backend run build`, `npm run test:frontend` e `prisma migrate deploy` em banco limpo também validados.
+Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
 
@@ -228,9 +238,45 @@ Nota CA-I2 e CA-I3 sao cenarios de boot e infra que exigem manipulacao de env va
 
 ---
 
+## Bloco L — SDD-005 (Reports + Audit)
+
+> Adicionado em 2026-04-24 após SDD-005 aprovado e transplantado para o principal. Implementa endpoints de relatórios operacionais e consulta paginada/filtrada de AuditLog.
+
+| # | Arquivo | Testes | Cobertura |
+|---|---------|--------|-----------|
+| 41 | `reports.test.ts` | 22 | Métricas, movimentações, relatório por setor, snapshot de estoque, filtros e autorização |
+| 42 | `audit-query.test.ts` | 11 | Consulta paginada de AuditLog, filtros por ação/usuário/período/alvo e autorização admin |
+| **SUBTOTAL SDD-005** | **2 arquivos** | **33** | — |
+
+---
+
+## Bloco M — SDD-006 (Deploy + Observabilidade)
+
+> Adicionado em 2026-04-26 após implementação parcial validada do SDD-006. Cobre contratos de ambiente produtivo, health/readiness, security headers, cookies de produção, logging/redact e graceful shutdown.
+
+| # | Arquivo | Testes | Cobertura |
+|---|---------|--------|-----------|
+| 43 | `production-env.test.ts` | 5 | Fail-fast para `CORS_ORIGIN` ausente/wildcard, `SEED_ENABLED=true`, `DATABASE_URL` não PostgreSQL e env produtiva válida |
+| 44 | `health-readiness.test.ts` | 4 | `/health/live` sem DB, `/health/ready` com DB conectado, `/health` compatível e readiness 503 sem vazar erro |
+| 45 | `security-headers.test.ts` | 3 | Headers mínimos em rota pública, `Cache-Control: no-store` em rota autenticada e preservação de `Set-Cookie` |
+| 46 | `production-cookies.test.ts` | 3 | Cookies `almox_sid` e `almox_csrf` com `Secure` em produção e sem exigência de `Secure` em test |
+| 47 | `logging-production.test.ts` | 2 | Redact de cookie/authorization/senhas e erro de env sem imprimir secrets |
+| 48 | `graceful-shutdown.test.ts` | 2 | Encerramento limpo com desconexão do banco e idempotência do shutdown |
+| **SUBTOTAL SDD-006** | **6 arquivos** | **19** | — |
+
+### Validações complementares SDD-006
+
+| Validação | Resultado | Evidência |
+|-----------|-----------|-----------|
+| Build backend | PASS | `cmd /c "npm --prefix backend run build"` |
+| Frontend apiClient | PASS, 62 testes | `npm run test:frontend` |
+| Baseline migration em banco limpo | PASS | `prisma migrate deploy` aplicou `00000000000000_baseline` em PostgreSQL temporário limpo; `_prisma_migrations.finished=true`; 13 tabelas públicas criadas; banco temporário removido |
+
+---
+
 ## Inventário canônico de testes (fonte da verdade)
 
-> **Esta lista é a referência oficial.** Qualquer regressão futura deve passar por toda ela antes de avançar em qualquer SDD. Total: **160 testes em 37 arquivos**.
+> **Esta lista é a referência oficial.** Qualquer regressão futura deve passar por toda ela antes de avançar em qualquer SDD. Total: **232 testes em 48 arquivos**.
 
 | # | Arquivo | Testes | SDD |
 |---|---------|--------|-----|
@@ -271,35 +317,51 @@ Nota CA-I2 e CA-I3 sao cenarios de boot e infra que exigem manipulacao de env va
 | 35 | `stock-authorization.test.ts` | 3 | SDD-003 |
 | 36 | `stock-audit.test.ts` | 2 | SDD-003 |
 | 37 | `stock-concurrency.test.ts` | 1 | SDD-003 |
-| **TOTAL** | **37 arquivos** | **160** | — |
+| 38 | `csrf.test.ts` | 8 | SDD-004 PR-1 |
+| 39 | `acessos.test.ts` | 5 | SDD-004 Addendum A |
+| 40 | `import-legacy.test.ts` | 5 | SDD-004 PR-9 |
+| 41 | `reports.test.ts` | 22 | SDD-005 |
+| 42 | `audit-query.test.ts` | 11 | SDD-005 |
+| 43 | `production-env.test.ts` | 5 | SDD-006 |
+| 44 | `health-readiness.test.ts` | 4 | SDD-006 |
+| 45 | `security-headers.test.ts` | 3 | SDD-006 |
+| 46 | `production-cookies.test.ts` | 3 | SDD-006 |
+| 47 | `logging-production.test.ts` | 2 | SDD-006 |
+| 48 | `graceful-shutdown.test.ts` | 2 | SDD-006 |
+| **TOTAL** | **48 arquivos** | **232** | — |
 
 ### Comando canônico de execução
 
 ```bash
 cd backend
-# Windows (cmd):
-set DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test
-npx vitest run --reporter=basic
-
-# Windows (PowerShell):
-$env:DATABASE_URL="postgresql://postgres:123456@localhost:5432/almox_test"
-npx vitest run --reporter=basic
-
-# Unix:
-DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test npx vitest run --reporter=basic
+npm test
 ```
 
-**Resultado esperado** (baseline 2026-04-18, pós SDD-004 PR-1 CSRF):
+**Resultado esperado** (baseline 2026-04-26, pós SDD-006 parcial):
 ```
-Test Files  38 passed (38)
-     Tests  170 passed (170)
-  Duration  ~58s
+Test Files  48 passed (48)
+     Tests  232 passed (232)
+  Duration  ~45.57s
+```
+
+Validações complementares:
+
+```bash
+npm --prefix backend run build
+npm run test:frontend
+```
+
+Resultados esperados:
+
+```text
+backend build: tsc sem erro
+frontend: Test Files 1 passed (1), Tests 62 passed (62)
 ```
 
 ### Critério de regressão
 
-- ✅ Toda nova SDD (SDD-002, 003, 004…) **soma** testes a este inventário, nunca remove.
-- ✅ Nenhum SDD pode ser fechado enquanto **qualquer** dos 160 testes atuais falhar.
+- ✅ Toda nova SDD **soma** testes a este inventário, nunca remove.
+- ✅ Nenhum SDD pode ser fechado enquanto **qualquer** dos 232 testes atuais falhar.
 - ✅ Qualquer mudança de contrato que quebre um teste exige **micro-SPEC aprovada** antes (como fizemos com paginação).
 - ❌ Teste `skip` ou `todo` é proibido — se algo não pode ser testado agora, registrar como débito explícito em "Riscos Residuais" ou "Débitos Técnicos".
 
@@ -332,7 +394,7 @@ Test Files  38 passed (38)
 | CA-A1 | 200 + Set-Cookie `almox_sid` HttpOnly + user sem senha | `auth.test.ts` teste 1 | PASS |
 | CA-A2 | Email inexistente → 401 mensagem genérica | `audit.test.ts` teste 3 (login inexistente) + `auth.test.ts` 2 | PASS |
 | CA-A3 | Senha errada → 401 mesma mensagem | `auth.test.ts` teste 2 | PASS |
-| CA-A4 | Usuário inativo → 401 mesma mensagem | coberto indiretamente em `session-invalidation` (após desativar, login de B não foi testado explicitamente — `requireAuth` detecta ativo=false e retorna 401 no próximo request, validado) | PARCIAL¹ |
+| CA-A4 | Usuário inativo → 401 mesma mensagem | `auth-hardening.test.ts` (usuário inativo = 401 genérico, sem sessão, sem LOGIN success, com LOGIN_FAILED) | PASS |
 | CA-A5 | Logout → cookie limpo + session deletada | `auth.test.ts` teste 4 | PASS |
 | CA-A6 | /auth/me → expires_at renovada | `session-invalidation.test.ts` sliding | PASS |
 | CA-A7 | Sessão expirada → 401 + session deletada | coberto por lógica de `requireAuth` (E6/E7) | PASS |
@@ -340,8 +402,6 @@ Test Files  38 passed (38)
 | CA-A9 | AuditLog LOGIN | `audit.test.ts` teste 2 | PASS |
 | CA-A10 | AuditLog LOGIN_FAILED | `audit.test.ts` teste 3 | PASS |
 | CA-A11 | Campo senha ausente | todos os testes de auth/users | PASS |
-
-¹ *CA-A4 explícito — próxima iteração deve adicionar teste "login em user com `ativo=false` → 401".*
 
 ### Users (SDD-001 §6)
 
@@ -364,11 +424,60 @@ Test Files  38 passed (38)
 | CA | Descrição | Status |
 |----|-----------|--------|
 | CA-I1 | GET /health OK + DB connected | PASS (healthcheck testa 200 OK; DB connected validado via `$queryRaw`) |
-| CA-I2 | DB caiu -> 503 | PARCIAL |
-| CA-I3 | SESSION_SECRET ausente | PARCIAL |
+| CA-I2 | DB caiu -> 503 | PASS (`infra-failure.test.ts`: health degradado 503 + recuperação para 200) |
+| CA-I3 | SESSION_SECRET ausente | PASS (`infra-failure.test.ts`: `validateEnv` e `buildApp` abortam sem secret/secret curto) |
 | CA-I4 | Erro 500 padronizado + log limpo | PASS (errorHandler retorna `INTERNAL_ERROR`; redact verificado) |
 
-Nota CA-I2 e CA-I3 sao cenarios de boot e infra que exigem manipulacao de env vars na suite e nao foram cobertos nesta iteracao registrar como debito tecnico
+---
+
+## Mapeamento Critérios SDD-006 × Resultados
+
+### Infra e ambiente
+
+| CA | Descrição | Evidência | Status |
+|----|-----------|-----------|--------|
+| CA-I1 | `NODE_ENV=production` com env obrigatória ausente falha antes do boot | `production-env.test.ts` | PASS |
+| CA-I2 | `SESSION_SECRET` curto falha sem imprimir valor sensível | `logging-production.test.ts` + validação existente de env | PASS |
+| CA-I3 | `CORS_ORIGIN=*` em produção falha | `production-env.test.ts` | PASS |
+| CA-I4 | `SEED_ENABLED=true` em produção é bloqueado | `production-env.test.ts` | PASS |
+| CA-I5 | Env produtiva válida é aceita | `production-env.test.ts` | PASS |
+
+### Health
+
+| CA | Descrição | Evidência | Status |
+|----|-----------|-----------|--------|
+| CA-H1 | `/health/live` retorna 200 sem ping de DB | `health-readiness.test.ts` | PASS |
+| CA-H2 | `/health/ready` retorna 200 com DB conectado | `health-readiness.test.ts` | PASS |
+| CA-H3 | `/health/ready` retorna 503 com DB indisponível | `health-readiness.test.ts` | PASS |
+| CA-H4 | `/health` mantém contrato compatível com readiness | `health-readiness.test.ts`, `healthcheck.test.ts` | PASS |
+
+### Segurança e observabilidade
+
+| CA | Descrição | Evidência | Status |
+|----|-----------|-----------|--------|
+| CA-S1 | Respostas HTTP incluem headers mínimos de segurança | `security-headers.test.ts` | PASS |
+| CA-S2 | Rota autenticada inclui `Cache-Control: no-store` | `security-headers.test.ts` | PASS |
+| CA-S3 | Login em produção emite cookies com `Secure` | `production-cookies.test.ts` | PASS |
+| CA-S4 | Logs não expõem cookie, authorization e senhas | `logging-production.test.ts` | PASS |
+| CA-S5 | Erro interno segue response padronizado e sem stack trace ao usuário | Cobertura herdada de `error-format.test.ts` e `infra-failure.test.ts` | PASS |
+
+### Banco/deploy
+
+| CA | Descrição | Evidência | Status |
+|----|-----------|-----------|--------|
+| CA-D1 | Baseline migration existe | `backend/prisma/migrations/00000000000000_baseline/migration.sql` | PASS |
+| CA-D2 | Schema aplica com `prisma migrate deploy`, não `db push` | Validação em PostgreSQL temporário limpo em 2026-04-26 | PASS |
+| CA-D3 | Falha de migration não deve considerar versão ready | Coberto por runbook `docs/runbooks/SDD-006-deploy.md` e validação manual; sem deploy real ainda | PARCIAL |
+| CA-D4 | Rollback documentado | `docs/runbooks/SDD-006-rollback.md` | PASS |
+| CA-D5 | Backup/restore documentado antes de migration relevante | `docs/runbooks/SDD-006-backup-restore.md` | PASS |
+
+### Validação local
+
+| CA | Descrição | Evidência | Status |
+|----|-----------|-----------|--------|
+| CA-T1 | `npm test` em `backend/` passa | 48 arquivos / 232 testes PASS | PASS |
+| CA-T2 | `npm run build` em `backend/` passa | `tsc` sem erro | PASS |
+| CA-T3 | `PROGRESS.md` e runbooks refletem estado real | `docs/PROGRESS.md`, `docs/runbooks/*` | PASS |
 
 ---
 
@@ -378,37 +487,43 @@ Nota CA-I2 e CA-I3 sao cenarios de boot e infra que exigem manipulacao de env va
 |---|-------|-----------|------------|
 | R1 | Segfault ao encerrar processo no Windows (exit 139) | BAIXO | Ocorre esporadicamente no cleanup do Prisma; não afeta resultado |
 | R2 | Execução sequencial obrigatória | MÉDIO | `fileParallelism: false` + banco compartilhado. Paralelismo requer banco isolado por suite |
-| R3 | CA-A4 explícito (login em user inativo) ausente | BAIXO | Fluxo coberto indiretamente; adicionar teste direto na próxima iteração |
-| R4 | CA-I2/CA-I3 (cenários de boot) não testados | BAIXO | Exige harness de processo separado; débito técnico |
+| R3 | Regressão em CA-A4/CA-I2/CA-I3 sem execução do bloco dedicado | BAIXO | Manter execução de `auth-hardening.test.ts` + `infra-failure.test.ts` no gate |
+| R4 | Cenários de boot dependem de env isolado | BAIXO | Rodar com `DATABASE_URL` de teste e validar `validateEnv/buildApp` |
 | R5 | Rate-limit por IP; em localhost todos os testes compartilham IP | BAIXO | Mitigado via `LOGIN_RATE_LIMIT_MAX` alto em `.env.test` |
 | R6 | Sem job de limpeza de sessões expiradas | BAIXO | Registrado em SDD-001 §7 R1; pendência para módulo posterior |
+| R7 | Smoke test de deploy real ainda não executado | MÉDIO | Depende de ambiente alvo disponível; SDD-006 não deve ser marcado como concluído antes dessa evidência |
+| R8 | CA-D3 ainda depende de validação em deploy real | BAIXO | Runbook cobre o comportamento; validação prática fica para implantação no provedor |
 
 ---
 
 ## Rollback
 
-Em caso de necessidade de reverter o SDD-001+FIX:
+Rollback operacional do SDD-006 deve seguir os runbooks versionados:
 
-```bash
-# 1) Reset do schema (destrói dados de teste/dev)
-cd backend
-DATABASE_URL=<url> npx prisma db push --force-reset
+- [SDD-006-rollback.md](./runbooks/SDD-006-rollback.md)
+- [SDD-006-backup-restore.md](./runbooks/SDD-006-backup-restore.md)
+- [SDD-006-db-down.md](./runbooks/SDD-006-db-down.md)
 
-# 2) Remoção do backend (frontend permanece intocado)
-rm -rf backend/
-```
+Regras vigentes:
 
-**Risco de rollback:** nenhum. Frontend não depende do backend neste módulo.
+- Não usar `prisma migrate reset` em produção.
+- Não usar `prisma db push --accept-data-loss` em produção.
+- Rollback de schema produtivo é forward-only por nova migration.
+- Restaurar backup exige validação prévia em ambiente de teste e aprovação operacional.
 
 ---
 
 ## Conclusão
 
-Todos os 5 desvios do SDD-001-FIX (DV1, DV3, DV4, DV5, DV7) foram corrigidos. Os 9 testes adicionais (§5.1–§5.9) e 5 edge cases (§6) foram implementados e passam. Após clean-code review, mais 6 testes de paginação foram acrescidos (Bloco E). **133/133 testes passam em 28 arquivos**, nenhum `skip`/`todo`. Débitos técnicos de código **ZERADOS** antes da SDD-002. Débitos pendentes remanescentes (CA-A4 explícito, CA-I2, CA-I3) são **feature gaps** — não débitos de código existente — registrados como riscos residuais.
+O baseline acumulado até a implementação parcial do SDD-006 está validado com **48 arquivos backend / 232 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
 
-**Definition of Done do SDD-001 + FIX + clean-code atingida.**
+O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact e graceful shutdown. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo.
 
-**Este documento é a fonte da verdade dos testes.** Todo avanço futuro (SDD-002, SDD-003…) só acontece com os 133 testes atuais passando + novos testes somados aqui.
+**Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido.**
+
+**Pendências para fechamento total do SDD-006:** smoke test de deploy real, validação operacional no alvo escolhido e registro final de riscos residuais.
+
+**Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 232 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 
 
 

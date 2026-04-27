@@ -4,12 +4,12 @@ import { test, expect } from "@playwright/test";
  * SDD-004 PR-3 — E2E: Painel (Dashboard).
  *
  * Pré-condições:
- *  - Backend rodando em http://localhost:3000 (npm run dev em backend/).
+ *  - Backend rodando em http://localhost:3002 (gerenciado pelo Playwright).
  *  - Seed aplicado (admin@rodoviariapel.com / admin2026).
- *  - Frontend servido em http://127.0.0.1:5173 (webServer do playwright.config.ts).
+ *  - Frontend servido em http://localhost:8080 (webServer do playwright.config.ts).
  */
 
-const BACKEND_BASE = process.env.ALMOX_BACKEND_URL || "http://localhost:3000/api/v1";
+const BACKEND_BASE = process.env.ALMOX_BACKEND_URL || "http://localhost:3002/api/v1";
 
 test.beforeEach(async ({ context }) => {
   await context.addInitScript((base) => {

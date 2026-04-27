@@ -41,6 +41,7 @@ declare global {
     entradas: ListCreate;
     saidas: ListCreate;
     ajustes: ListCreate;
+    acessos: ListCreate;
     health: () => Promise<unknown>;
   };
 }
@@ -121,6 +122,7 @@ describe("apiClient — CSRF + transport", () => {
     expect(globalThis.apiClient.ApiError).toBeTypeOf("function");
     expect(globalThis.apiClient.auth.login).toBeTypeOf("function");
     expect(globalThis.apiClient.users.create).toBeTypeOf("function");
+    expect(globalThis.apiClient.acessos.create).toBeTypeOf("function");
   });
 
   it("_csrfFromCookie lê cookie almox_csrf", () => {
@@ -349,6 +351,22 @@ describe("apiClient — respostas", () => {
 describe("apiClient.auth", () => {
   beforeEach(() => setCsrfCookie());
 
+  it("login funciona sem cookie csrf e nao envia header csrf", async () => {
+    document.cookie = "almox_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    fetchMock().mockResolvedValue(
+      mockJsonResponse({ user: { id: "1" }, csrfToken: "novo-token" })
+    );
+
+    await expect(
+      globalThis.apiClient.auth.login("admin@rodoviariapel.com", "admin2026")
+    ).resolves.toEqual({ user: { id: "1" }, csrfToken: "novo-token" });
+
+    const call = fetchMock().mock.calls[0];
+    expect(call[0]).toMatch(/\/auth\/login$/);
+    expect(call[1].method).toBe("POST");
+    expect(call[1].headers).not.toHaveProperty("x-almox-csrf");
+  });
+
   it("login chama POST /auth/login com email+senha", async () => {
     fetchMock().mockResolvedValue(
       mockJsonResponse({ user: { id: "1" }, csrfToken: "abc" })
@@ -420,7 +438,7 @@ describe("apiClient.users", () => {
     await globalThis.apiClient.users.updatePassword("u1", "newsenha");
     expect(fetchMock().mock.calls[0][0]).toMatch(/\/users\/u1\/password$/);
     expect(fetchMock().mock.calls[0][1].method).toBe("PATCH");
-    expect(fetchMock().mock.calls[0][1].body).toBe('{"senha":"newsenha"}');
+    expect(fetchMock().mock.calls[0][1].body).toBe('{"novaSenha":"newsenha"}');
   });
 
   it("remove DELETE /users/:id", async () => {

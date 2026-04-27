@@ -13,37 +13,50 @@ import { itemsRoutes } from "../modules/inventory/items.routes";
 import { entradasRoutes } from "../modules/stock-movements/entradas.routes";
 import { saidasRoutes } from "../modules/stock-movements/saidas.routes";
 import { ajustesRoutes } from "../modules/stock-movements/ajustes.routes";
+import { acessosRoutes } from "../modules/acessos/routes";
+import { reportsRoutes } from "../modules/reports/reports.routes";
+import { auditRoutes } from "../modules/audit/audit.routes";
 import { healthRoutes } from "../infra/healthcheck";
+import { securityHeaders } from "../infra/security-headers";
+import { registerShutdown } from "../infra/shutdown";
+import { loggerOptions } from "../infra/logger-options";
 import { errorHandler, notFoundHandler } from "../infra/error-handler";
+
+function resolveCorsOrigins() {
+  const defaults = [
+    "http://localhost:8080",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ];
+  const envOrigins = String(process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+
+  return new Set([...defaults, ...envOrigins]);
+}
 
 export async function buildApp() {
   validateEnv();
+  const allowedCorsOrigins = resolveCorsOrigins();
 
   const app = Fastify({
-    logger:
-      process.env.NODE_ENV !== "test"
-        ? {
-            level: process.env.LOG_LEVEL || "info",
-            redact: {
-              paths: [
-                "req.headers.cookie",
-                "req.headers.authorization",
-                'req.body.senha',
-                'req.body.password',
-                'req.body.novaSenha',
-                "res.headers['set-cookie']",
-              ],
-              censor: "[REDACTED]",
-            },
-          }
-        : false,
+    logger: process.env.NODE_ENV !== "test" ? loggerOptions() : false,
   });
 
+  await securityHeaders(app);
+
   await app.register(cors, {
-    origin: process.env.CORS_ORIGIN || "http://localhost:8080",
+    origin(origin, callback) {
+      if (!origin || allowedCorsOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Not allowed by CORS"), false);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-almox-csrf"],
   });
 
   await app.register(cookie);
@@ -75,6 +88,9 @@ export async function buildApp() {
       await api.register(entradasRoutes, { prefix: "/entradas" });
       await api.register(saidasRoutes, { prefix: "/saidas" });
       await api.register(ajustesRoutes, { prefix: "/ajustes" });
+      await api.register(acessosRoutes, { prefix: "/acessos" });
+      await api.register(reportsRoutes, { prefix: "/reports" });
+      await api.register(auditRoutes, { prefix: "/audit" });
     },
     { prefix: "/api/v1" }
   );
@@ -84,8 +100,9 @@ export async function buildApp() {
 
 if (require.main === module) {
   buildApp().then(async (app) => {
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 3001;
     const HOST = process.env.HOST || "0.0.0.0";
+    registerShutdown(app);
     await app.listen({ port: Number(PORT), host: HOST });
   });
 }

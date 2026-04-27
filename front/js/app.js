@@ -4,13 +4,7 @@
 
 const App = {
   currentPage: 'painel',
-  activities: [
-    {text:'<strong>Daniel Santos</strong>: Retirada de Teclado Sem Fio — TI',         color:'red',  time:'12 dias'},
-    {text:'<strong>Marina Rodrigues</strong>: Retirada de Papel Sulfite A4 — Operações',color:'red', time:'8 dias'},
-    {text:'<strong>João Almeida</strong>: Entrada de HD Externo 1TB (+3)',              color:'green',time:'2 dias'},
-    {text:'<strong>Elisa Gomes</strong>: Entrada de Papel Sulfite A4 (+50)',            color:'green',time:'1 dia'},
-    {text:'<strong>Elisa Gomes</strong>: Retirada de Caneta Esferográfica — Adm.',     color:'red',  time:'Hoje'},
-  ],
+  activities: [],
 
   async init() {
     initStore();

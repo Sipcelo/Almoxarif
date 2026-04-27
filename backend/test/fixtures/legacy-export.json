@@ -1,0 +1,284 @@
+﻿{
+  "setores": [
+    "Administrativo",
+    "TI",
+    "Manutencao",
+    "Operacoes",
+    "Almoxarifado"
+  ],
+  "categorias": [
+    "Cabos",
+    "Informatica",
+    "Papelaria",
+    "Limpeza",
+    "Ferramentas"
+  ],
+  "depositos": [
+    "Deposito 01",
+    "Deposito 02",
+    "Almoxarifado Central",
+    "Escritorio",
+    "Externo"
+  ],
+  "funcionarios": [
+    {
+      "id": 1,
+      "nome": "Elisa Gomes",
+      "setor": "Administrativo",
+      "cargo": "Assistente",
+      "ativo": true
+    },
+    {
+      "id": 2,
+      "nome": "Daniel Santos",
+      "setor": "TI",
+      "cargo": "Tecnico",
+      "ativo": true
+    },
+    {
+      "id": 3,
+      "nome": "Marina Rodrigues",
+      "setor": "Operacoes",
+      "cargo": "Supervisora",
+      "ativo": true
+    },
+    {
+      "id": 4,
+      "nome": "Carlos Pereira",
+      "setor": "Manutencao",
+      "cargo": "Motorista",
+      "ativo": true
+    },
+    {
+      "id": 5,
+      "nome": "Joao Almeida",
+      "setor": "Almoxarifado",
+      "cargo": "Almoxarife",
+      "ativo": true
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "nome": "Administrador Legacy",
+      "email": "admin.legacy@example.com",
+      "senha": "admin12345",
+      "role": "admin",
+      "ativo": true
+    },
+    {
+      "id": 2,
+      "nome": "Operador Legacy",
+      "email": "op.legacy@example.com",
+      "senha": "operador123",
+      "role": "operador",
+      "ativo": true
+    },
+    {
+      "id": 3,
+      "nome": "Gerente Legacy",
+      "email": "gerente.legacy@example.com",
+      "senha": "gerente123",
+      "role": "gerente",
+      "ativo": true
+    },
+    {
+      "id": 4,
+      "nome": "Visitante Legacy",
+      "email": "visitante.legacy@example.com",
+      "senha": "visitante123",
+      "role": "visitante",
+      "ativo": true
+    },
+    {
+      "id": 5,
+      "nome": "Apoio Legacy",
+      "email": "apoio.legacy@example.com",
+      "senha": "apoio12345",
+      "role": "operador",
+      "ativo": false
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "codigo": "CAB001",
+      "descricao": "Cabo USB para Impressora",
+      "categoria": "Cabos",
+      "deposito": "Deposito 01",
+      "quantidade": 20,
+      "minimo": 5,
+      "valor": 8.5,
+      "obs": ""
+    },
+    {
+      "id": 2,
+      "codigo": "INF001",
+      "descricao": "Teclado Sem Fio",
+      "categoria": "Informatica",
+      "deposito": "Deposito 01",
+      "quantidade": 12,
+      "minimo": 3,
+      "valor": 120,
+      "obs": ""
+    },
+    {
+      "id": 3,
+      "codigo": "PAP001",
+      "descricao": "Papel Sulfite A4",
+      "categoria": "Papelaria",
+      "deposito": "Almoxarifado Central",
+      "quantidade": 150,
+      "minimo": 20,
+      "valor": 28,
+      "obs": "Resma 500 folhas"
+    },
+    {
+      "id": 4,
+      "codigo": "LIM001",
+      "descricao": "Pano de Limpeza",
+      "categoria": "Limpeza",
+      "deposito": "Deposito 02",
+      "quantidade": 30,
+      "minimo": 10,
+      "valor": 5,
+      "obs": ""
+    },
+    {
+      "id": 5,
+      "codigo": "FER001",
+      "descricao": "Chave de Fenda",
+      "categoria": "Ferramentas",
+      "deposito": "Externo",
+      "quantidade": 18,
+      "minimo": 4,
+      "valor": 19.9,
+      "obs": ""
+    }
+  ],
+  "entradas": [
+    {
+      "id": 1,
+      "itemId": 1,
+      "itemCodigo": "CAB001",
+      "itemNome": "Cabo USB para Impressora",
+      "qtd": 10,
+      "valorUnit": 8.5,
+      "data": "2026-04-01",
+      "resp": "Administrador Legacy",
+      "obs": "Reposicao"
+    },
+    {
+      "id": 2,
+      "itemId": 3,
+      "itemCodigo": "PAP001",
+      "itemNome": "Papel Sulfite A4",
+      "qtd": 50,
+      "valorUnit": 28,
+      "data": "2026-04-02",
+      "resp": "Operador Legacy",
+      "obs": "Caixa grande"
+    },
+    {
+      "id": 3,
+      "itemId": 2,
+      "itemCodigo": "INF001",
+      "itemNome": "Teclado Sem Fio",
+      "qtd": 3,
+      "valorUnit": 120,
+      "data": "2026-04-03",
+      "resp": "Gerente Legacy",
+      "obs": ""
+    },
+    {
+      "id": 4,
+      "itemId": 4,
+      "itemCodigo": "LIM001",
+      "itemNome": "Pano de Limpeza",
+      "qtd": 20,
+      "valorUnit": 5,
+      "data": "2026-04-04",
+      "resp": "Operador Legacy",
+      "obs": ""
+    },
+    {
+      "id": 5,
+      "itemId": 5,
+      "itemCodigo": "FER001",
+      "itemNome": "Chave de Fenda",
+      "qtd": 5,
+      "valorUnit": 19.9,
+      "data": "2026-04-05",
+      "resp": "Apoio Legacy",
+      "obs": ""
+    }
+  ],
+  "saidas": [
+    {
+      "id": 1,
+      "itemId": 1,
+      "itemCodigo": "CAB001",
+      "itemNome": "Cabo USB para Impressora",
+      "qtd": 2,
+      "valorUnit": 8.5,
+      "data": "2026-04-06",
+      "funcId": 4,
+      "funcNome": "Carlos Pereira",
+      "setor": "Manutencao",
+      "obs": "Setor TI"
+    },
+    {
+      "id": 2,
+      "itemId": 2,
+      "itemCodigo": "INF001",
+      "itemNome": "Teclado Sem Fio",
+      "qtd": 1,
+      "valorUnit": 120,
+      "data": "2026-04-06",
+      "funcId": 2,
+      "funcNome": "Daniel Santos",
+      "setor": "TI",
+      "obs": ""
+    },
+    {
+      "id": 3,
+      "itemId": 3,
+      "itemCodigo": "PAP001",
+      "itemNome": "Papel Sulfite A4",
+      "qtd": 3,
+      "valorUnit": 28,
+      "data": "2026-04-07",
+      "funcId": 1,
+      "funcNome": "Elisa Gomes",
+      "setor": "Administrativo",
+      "obs": "Reuniao"
+    },
+    {
+      "id": 4,
+      "itemId": 4,
+      "itemCodigo": "LIM001",
+      "itemNome": "Pano de Limpeza",
+      "qtd": 4,
+      "valorUnit": 5,
+      "data": "2026-04-07",
+      "funcId": 3,
+      "funcNome": "Marina Rodrigues",
+      "setor": "Operacoes",
+      "obs": ""
+    },
+    {
+      "id": 5,
+      "itemId": 5,
+      "itemCodigo": "FER001",
+      "itemNome": "Chave de Fenda",
+      "qtd": 2,
+      "valorUnit": 19.9,
+      "data": "2026-04-08",
+      "funcId": 5,
+      "funcNome": "Joao Almeida",
+      "setor": "Almoxarifado",
+      "obs": ""
+    }
+  ],
+  "exportedAt": "2026-04-20T00:00:00.000Z"
+}

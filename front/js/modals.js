@@ -1,116 +1,334 @@
-/* ============================================================
-   Almox — Modals v4
+﻿/* ============================================================
+   Almox â€” Modals v4
    ============================================================ */
 
-const Modals = {
+const Modals = {  // ---- ITEM ----
+  _itemCatalog: { categorias: [], depositos: [] },
+  _entradaItems: [],
+  _saidaItems: [],
+  _saidaFuncionarios: [],
+  _funcSetores: [],
 
-  // ---- ITEM ----
-  openNewItem(){
-    Utils.fillSelect('m-item-cat', Store.getCategorias());
-    Utils.fillSelect('m-item-dep', Store.getDepositos());
-    ['m-item-id','m-item-desc','m-item-codigo','m-item-obs'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
-    document.getElementById('m-item-qtd').value='0';
-    document.getElementById('m-item-min').value='5';
-    document.getElementById('m-item-valor').value='0.00';
-    document.getElementById('m-item-title').textContent='Novo Item';
-    Utils.openModal('modal-item');
+  _extractRows(payload, key) {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== 'object') return [];
+    const rows = payload[key];
+    return Array.isArray(rows) ? rows : [];
   },
 
-  editItem(id){
-    const item=Store.getItems().find(i=>i.id===id); if(!item)return;
-    Utils.fillSelect('m-item-cat', Store.getCategorias());
-    Utils.fillSelect('m-item-dep', Store.getDepositos());
-    document.getElementById('m-item-id').value      = item.id;
-    document.getElementById('m-item-codigo').value  = item.codigo||'';
-    document.getElementById('m-item-desc').value    = item.descricao;
-    document.getElementById('m-item-cat').value     = item.categoria;
-    document.getElementById('m-item-dep').value     = item.deposito;
-    document.getElementById('m-item-qtd').value     = item.quantidade;
-    document.getElementById('m-item-min').value     = item.minimo;
-    document.getElementById('m-item-valor').value   = (item.valor||0).toFixed(2);
-    document.getElementById('m-item-obs').value     = item.obs||'';
-    document.getElementById('m-item-title').textContent='Editar Item';
-    Utils.openModal('modal-item');
+  _extractTotalPages(payload) {
+    if (!payload || typeof payload !== 'object' || !payload.meta) return 1;
+    const raw = Number(payload.meta.totalPages);
+    if (!Number.isFinite(raw) || raw < 1) return 1;
+    return Math.floor(raw);
   },
 
-  saveItem(){
-    const id    = document.getElementById('m-item-id').value;
+  async _listAll(fetchPage, key) {
+    const limit = 100;
+    const first = await fetchPage({ page: 1, limit, ativo: true });
+    const rows = this._extractRows(first, key);
+    const totalPages = this._extractTotalPages(first);
+    if (totalPages <= 1) return rows;
+
+    const chunks = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, idx) => fetchPage({ page: idx + 2, limit, ativo: true }))
+    );
+
+    const all = [...rows];
+    for (const payload of chunks) {
+      all.push(...this._extractRows(payload, key));
+    }
+    return all;
+  },
+
+  _normalizeName(v) {
+    return String(v || '').trim().toLowerCase();
+  },
+
+  _findByName(rows, nome) {
+    const key = this._normalizeName(nome);
+    return rows.find((r) => this._normalizeName(r.nome) === key) || null;
+  },
+
+  _normalizeItem(raw) {
+    if (!raw) return null;
+    return {
+      id: String(raw.id || ''),
+      codigo: raw.codigo || '',
+      descricao: raw.descricao || '',
+      categoriaId: raw.categoriaId || raw?.categoria?.id || '',
+      categoria: raw?.categoria?.nome || '',
+      depositoId: raw.depositoId || raw?.deposito?.id || '',
+      deposito: raw?.deposito?.nome || '',
+      quantidade: Number(raw.quantidade || 0),
+      minimo: Number(raw.minimo || 0),
+      valor: Number(raw.valorAtual || 0),
+      obs: raw.obs || '',
+    };
+  },
+
+  _normalizeItemForEntrada(raw) {
+    if (!raw) return null;
+    return {
+      id: String(raw.id || ''),
+      codigo: raw.codigo || '',
+      descricao: raw.descricao || '',
+      quantidade: Number(raw.quantidade || 0),
+      minimo: Number(raw.minimo || 0),
+      valorAtual: Number(raw.valorAtual || 0),
+      ativo: raw.ativo !== false,
+    };
+  },
+
+  _normalizeFuncionarioForSaida(raw) {
+    if (!raw) return null;
+    return {
+      id: String(raw.id || ''),
+      nome: raw.nome || '',
+      cargo: raw.cargo || '',
+      setor: raw?.setor?.nome || '',
+      ativo: raw.ativo !== false,
+    };
+  },
+
+  _toIsoDate(dateStr) {
+    const value = String(dateStr || '').trim();
+    if (!value) return null;
+    const parsed = new Date(`${value}T12:00:00`);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString();
+  },
+
+  async _loadItemCatalog() {
+    const [categorias, depositos] = await Promise.all([
+      this._listAll((params) => apiClient.categorias.list(params), 'categorias'),
+      this._listAll((params) => apiClient.depositos.list(params), 'depositos'),
+    ]);
+    this._itemCatalog = { categorias, depositos };
+    return this._itemCatalog;
+  },
+
+  async openNewItem(){
+    try {
+      const { categorias, depositos } = await this._loadItemCatalog();
+      if (!categorias.length || !depositos.length) {
+        Utils.notify('Cadastre categoria e deposito antes de criar item.', 'error');
+        return;
+      }
+      Utils.fillSelect('m-item-cat', categorias.map((c) => c.nome));
+      Utils.fillSelect('m-item-dep', depositos.map((d) => d.nome));
+      ['m-item-id','m-item-desc','m-item-codigo','m-item-obs'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+      document.getElementById('m-item-qtd').value='0';
+      document.getElementById('m-item-qtd').disabled=false;
+      document.getElementById('m-item-min').value='5';
+      document.getElementById('m-item-valor').value='0.00';
+      document.getElementById('m-item-title').textContent='Novo Item';
+      Utils.openModal('modal-item');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao abrir modal de item.';
+      Utils.notify(msg, 'error');
+    }
+  },
+
+  async editItem(id){
+    try {
+      const [catalog, res] = await Promise.all([
+        this._loadItemCatalog(),
+        apiClient.items.get(String(id)),
+      ]);
+      const item = this._normalizeItem(res?.item);
+      if(!item)return;
+      Utils.fillSelect('m-item-cat', catalog.categorias.map((c) => c.nome));
+      Utils.fillSelect('m-item-dep', catalog.depositos.map((d) => d.nome));
+      const categoria = catalog.categorias.find((c) => c.id === item.categoriaId);
+      const deposito = catalog.depositos.find((d) => d.id === item.depositoId);
+      document.getElementById('m-item-id').value      = item.id;
+      document.getElementById('m-item-codigo').value  = item.codigo||'';
+      document.getElementById('m-item-desc').value    = item.descricao;
+      document.getElementById('m-item-cat').value     = (categoria && categoria.nome) || item.categoria || '';
+      document.getElementById('m-item-dep').value     = (deposito && deposito.nome) || item.deposito || '';
+      document.getElementById('m-item-qtd').value     = item.quantidade;
+      document.getElementById('m-item-qtd').disabled  = true;
+      document.getElementById('m-item-min').value     = item.minimo;
+      document.getElementById('m-item-valor').value   = (item.valor||0).toFixed(2);
+      document.getElementById('m-item-obs').value     = item.obs||'';
+      document.getElementById('m-item-title').textContent='Editar Item';
+      Utils.openModal('modal-item');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao carregar item.';
+      Utils.notify(msg, 'error');
+    }
+  },
+
+  async saveItem(){
+    const id    = String(document.getElementById('m-item-id').value || '').trim();
     const desc  = document.getElementById('m-item-desc').value.trim();
     const codigo= document.getElementById('m-item-codigo').value.trim().toUpperCase();
-    if(!desc){ Utils.notify('Preencha a descrição','error'); return; }
-    const items=Store.getItems();
-    // Check codigo unique
-    if(codigo && items.some(i=>i.codigo===codigo && String(i.id)!==id)){ Utils.notify('Código já cadastrado em outro item','error'); return; }
-    const obj={
-      id: id?parseInt(id):Store.nextId(items),
-      codigo, descricao:desc,
-      categoria:  document.getElementById('m-item-cat').value,
-      deposito:   document.getElementById('m-item-dep').value,
-      quantidade: parseInt(document.getElementById('m-item-qtd').value)||0,
-      minimo:     parseInt(document.getElementById('m-item-min').value)||5,
-      valor:      parseFloat(document.getElementById('m-item-valor').value)||0,
-      obs:        document.getElementById('m-item-obs').value.trim(),
-    };
-    if(id){ const idx=items.findIndex(i=>i.id===obj.id); items[idx]=obj; }
-    else   { items.push(obj); }
-    Store.setItems(items);
-    Utils.closeModal('modal-item');
-    App.refreshCurrentPage();
-    App.addActivity(`<strong>${Auth.currentUser?.nome||'Admin'}</strong>: ${id?'Editou':'Criou'} item "${obj.descricao}"`, id?'blue':'green');
-    Utils.notify(id?'Item atualizado!':'Item criado!');
+    if(!desc){ Utils.notify('Preencha a descricao','error'); return; }
+
+    try {
+      if (!this._itemCatalog.categorias.length || !this._itemCatalog.depositos.length) {
+        await this._loadItemCatalog();
+      }
+      const categoriaNome = document.getElementById('m-item-cat').value;
+      const depositoNome = document.getElementById('m-item-dep').value;
+      const categoria = this._findByName(this._itemCatalog.categorias, categoriaNome);
+      const deposito = this._findByName(this._itemCatalog.depositos, depositoNome);
+      if (!categoria || !deposito) {
+        Utils.notify('Categoria ou deposito invalido.', 'error');
+        return;
+      }
+
+      const payload = {
+        codigo,
+        descricao: desc,
+        categoriaId: categoria.id,
+        depositoId: deposito.id,
+        minimo: parseInt(document.getElementById('m-item-min').value)||5,
+        valorAtual: parseFloat(document.getElementById('m-item-valor').value)||0,
+        obs: document.getElementById('m-item-obs').value.trim() || null,
+      };
+
+      let item = null;
+      if(id){
+        const res = await apiClient.items.update(id, payload);
+        item = res?.item || null;
+      } else {
+        const res = await apiClient.items.create({
+          ...payload,
+          quantidade: parseInt(document.getElementById('m-item-qtd').value)||0,
+        });
+        item = res?.item || null;
+      }
+
+      Utils.closeModal('modal-item');
+      App.refreshCurrentPage();
+      App.addActivity(`<strong>${Auth.currentUser?.nome||'Admin'}</strong>: ${id?'Editou':'Criou'} item "${item?.descricao||desc}"`, id?'blue':'green');
+      Utils.notify(id?'Item atualizado!':'Item criado!');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao salvar item.';
+      Utils.notify(msg, 'error');
+    }
   },
 
-  deleteItem(id){
-    const item=Store.getItems().find(i=>i.id===id); if(!item)return;
-    if(!confirm(`Excluir "${item.descricao}"?`))return;
-    Store.setItems(Store.getItems().filter(i=>i.id!==id));
-    App.refreshCurrentPage(); Utils.notify('Item excluído!');
+  async deleteItem(id){
+    const itemId = String(id || '').trim();
+    if(!itemId)return;
+    if(!confirm('Excluir este item?'))return;
+    try {
+      await apiClient.items.remove(itemId);
+      App.refreshCurrentPage();
+      Utils.notify('Item excluido!');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao excluir item.';
+      Utils.notify(msg, 'error');
+    }
   },
 
   // ---- ENTRADA ----
-  openEntrada(){
-    Utils.fillItemSelect('m-ent-item', Store.getItems());
-    document.getElementById('m-ent-qtd').value  = '1';
-    document.getElementById('m-ent-data').value = Utils.today();
-    document.getElementById('m-ent-resp').value = '';
-    document.getElementById('m-ent-obs').value  = '';
-    Utils.openModal('modal-entrada');
+
+  async openEntrada(preselectedItemId = ''){
+    try {
+      const rows = await this._listAll((params) => apiClient.items.list(params), 'items');
+      const items = rows
+        .map((row) => this._normalizeItemForEntrada(row))
+        .filter((row) => row && row.ativo !== false);
+
+      this._entradaItems = items;
+      Utils.fillItemSelect('m-ent-item', items);
+      if (preselectedItemId) {
+        document.getElementById('m-ent-item').value = String(preselectedItemId);
+      }
+      document.getElementById('m-ent-qtd').value = '1';
+      document.getElementById('m-ent-data').value = Utils.today();
+      document.getElementById('m-ent-resp').value = Auth.currentUser?.nome || '';
+      document.getElementById('m-ent-obs').value = '';
+      Utils.openModal('modal-entrada');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao abrir entrada.';
+      Utils.notify(msg, 'error');
+    }
   },
 
-  openEntradaFor(itemId){ this.openEntrada(); document.getElementById('m-ent-item').value=itemId; },
+  openEntradaFor(itemId){ this.openEntrada(String(itemId || '')); },
 
-  saveEntrada(){
-    const itemId=parseInt(document.getElementById('m-ent-item').value);
-    const qtd   =parseInt(document.getElementById('m-ent-qtd').value);
+  async saveEntrada(){
+    const itemId = String(document.getElementById('m-ent-item').value || '').trim();
+    const qtd = parseInt(document.getElementById('m-ent-qtd').value, 10);
     if(!itemId){ Utils.notify('Selecione um item','error'); return; }
-    if(qtd<1)  { Utils.notify('Quantidade inválida','error'); return; }
-    const items=Store.getItems(), item=items.find(i=>i.id===itemId); if(!item)return;
-    const entrada={
-      id:Store.nextId(Store.getEntradas()), itemId, itemNome:item.descricao,
-      itemCodigo:item.codigo||'', qtd, valorUnit:item.valor||0,
-      data:document.getElementById('m-ent-data').value,
-      resp:document.getElementById('m-ent-resp').value.trim(),
-      obs: document.getElementById('m-ent-obs').value.trim(),
-    };
-    item.quantidade+=qtd;
-    Store.setItems(items); Store.setEntradas([...Store.getEntradas(),entrada]);
-    App.addActivity(`<strong>${entrada.resp||Auth.currentUser?.nome||'Admin'}</strong>: Entrada de ${item.descricao} (+${qtd})`,'green');
-    Utils.closeModal('modal-entrada'); App.refreshCurrentPage();
-    Utils.notify(`Entrada de ${qtd} unidade(s) registrada!`);
+    if(!Number.isFinite(qtd) || qtd < 1){ Utils.notify('Quantidade invalida','error'); return; }
+
+    let item = this._entradaItems.find((row) => String(row.id) === itemId) || null;
+    if (!item) {
+      try {
+        const one = await apiClient.items.get(itemId);
+        item = this._normalizeItemForEntrada(one?.item);
+      } catch (_) {
+        item = null;
+      }
+    }
+    if(!item){ Utils.notify('Item nao encontrado','error'); return; }
+
+    try {
+      const payload = {
+        itemId,
+        qtd,
+        valorUnit: Number(item.valorAtual || 0),
+        obs: document.getElementById('m-ent-obs').value.trim() || null,
+      };
+      const isoDate = this._toIsoDate(document.getElementById('m-ent-data').value);
+      if (isoDate) payload.data = isoDate;
+
+      const created = await apiClient.entradas.create(payload);
+      const actorName = document.getElementById('m-ent-resp').value.trim() || Auth.currentUser?.nome || 'Usuario';
+      const itemNome = item.descricao || created?.entrada?.item?.descricao || 'item';
+
+      App.addActivity(`<strong>${actorName}</strong>: Entrada de ${itemNome} (+${qtd})`,'green');
+      Utils.closeModal('modal-entrada');
+      App.refreshCurrentPage();
+      Utils.notify(`Entrada de ${qtd} unidade(s) registrada!`);
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao registrar entrada.';
+      Utils.notify(msg, 'error');
+    }
   },
 
-  // ---- SAÍDA ----
-  openSaida(){
-    Utils.fillItemSelect('m-sai-item', Store.getItems());
-    this._setupFuncSearch();
-    document.getElementById('m-sai-qtd').value  = '1';
-    document.getElementById('m-sai-data').value = Utils.today();
-    document.getElementById('m-sai-obs').value  = '';
-    document.getElementById('m-sai-info').textContent='';
-    Utils.openModal('modal-saida');
+// ---- SAIDA ----
+  async openSaida(preselectedItemId = ''){
+    try {
+      const [itemsRaw, funcsRaw] = await Promise.all([
+        this._listAll((params) => apiClient.items.list(params), 'items'),
+        this._listAll((params) => apiClient.funcionarios.list(params), 'funcionarios'),
+      ]);
+
+      const items = itemsRaw
+        .map((row) => this._normalizeItemForEntrada(row))
+        .filter((row) => row && row.ativo !== false);
+      const funcs = funcsRaw
+        .map((row) => this._normalizeFuncionarioForSaida(row))
+        .filter((row) => row && row.ativo !== false);
+
+      this._saidaItems = items;
+      this._saidaFuncionarios = funcs;
+
+      Utils.fillItemSelect('m-sai-item', items);
+      this._setupFuncSearch();
+      document.getElementById('m-sai-qtd').value = '1';
+      document.getElementById('m-sai-data').value = Utils.today();
+      document.getElementById('m-sai-obs').value = '';
+      document.getElementById('m-sai-info').textContent = '';
+      if (preselectedItemId) {
+        document.getElementById('m-sai-item').value = String(preselectedItemId);
+      }
+      this.updateSaidaMax();
+      Utils.openModal('modal-saida');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao abrir saida.';
+      Utils.notify(msg, 'error');
+    }
   },
 
-  openSaidaFor(itemId){ this.openSaida(); document.getElementById('m-sai-item').value=itemId; this.updateSaidaMax(); },
+  openSaidaFor(itemId){ this.openSaida(String(itemId || '')); },
 
   _setupFuncSearch(){
     const input  = document.getElementById('m-sai-func-search');
@@ -119,24 +337,35 @@ const Modals = {
     const hiddenNome = document.getElementById('m-sai-func-nome');
     const hiddenSetor= document.getElementById('m-sai-func-setor');
     const tag        = document.getElementById('m-sai-func-tag');
-    if(!input)return;
-    // Reset
+    if(!input) return;
+
     input.value=''; hiddenId.value=''; hiddenNome.value=''; hiddenSetor.value='';
     tag.style.display='none'; results.style.display='none'; results.innerHTML='';
 
     input.oninput = ()=>{
       const q=input.value.toLowerCase().trim();
       if(!q){ results.style.display='none'; return; }
-      const fns=Store.getFuncionarios().filter(f=>f.ativo!==false&&(f.nome.toLowerCase().includes(q)||f.setor.toLowerCase().includes(q)||(f.cargo||'').toLowerCase().includes(q)));
-      if(fns.length===0){ results.innerHTML='<div style="padding:10px 14px;font-size:13px;color:var(--text-3)">Nenhum funcionário encontrado</div>'; results.style.display='block'; return; }
-      results.innerHTML=fns.map(f=>`
-        <div onclick="Modals._selectFunc(${f.id})" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+      const fns=this._saidaFuncionarios.filter(f=>
+        (f.nome||'').toLowerCase().includes(q) ||
+        (f.setor||'').toLowerCase().includes(q) ||
+        (f.cargo||'').toLowerCase().includes(q)
+      );
+      if(fns.length===0){
+        results.innerHTML='<div style="padding:10px 14px;font-size:13px;color:var(--text-3)">Nenhum funcionario encontrado</div>';
+        results.style.display='block';
+        return;
+      }
+      results.innerHTML=fns.map(f=>{
+        const idArg = JSON.stringify(String(f.id));
+        return `
+        <div onclick='Modals._selectFunc(${idArg})' style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
           ${Utils.avatarHtml(f.nome,'sm')}
-          <div><div style="font-size:13px;font-weight:500">${f.nome}</div><div style="font-size:11.5px;color:var(--text-3)">${f.setor} · ${f.cargo||'—'}</div></div>
-        </div>`).join('');
+          <div><div style="font-size:13px;font-weight:500">${f.nome}</div><div style="font-size:11.5px;color:var(--text-3)">${f.setor||'-'} - ${f.cargo||'-'}</div></div>
+        </div>`;
+      }).join('');
       results.style.display='block';
     };
-    // Close on outside click
+
     setTimeout(()=>{
       document.addEventListener('click', function handler(e){
         if(!results.contains(e.target)&&e.target!==input){ results.style.display='none'; document.removeEventListener('click',handler); }
@@ -145,14 +374,15 @@ const Modals = {
   },
 
   _selectFunc(id){
-    const fn=Store.getFuncionarios().find(f=>f.id===id); if(!fn)return;
+    const funcId = String(id || '');
+    const fn=this._saidaFuncionarios.find(f=>String(f.id)===funcId); if(!fn)return;
     document.getElementById('m-sai-func-id').value   = fn.id;
     document.getElementById('m-sai-func-nome').value = fn.nome;
-    document.getElementById('m-sai-func-setor').value= fn.setor;
+    document.getElementById('m-sai-func-setor').value= fn.setor || '';
     document.getElementById('m-sai-func-search').value='';
     document.getElementById('m-sai-func-results').style.display='none';
     const tag=document.getElementById('m-sai-func-tag');
-    tag.innerHTML=`${Utils.avatarHtml(fn.nome,'sm')} <div><div style="font-size:13px;font-weight:500">${fn.nome}</div><div style="font-size:11px;color:var(--text-3)">${fn.setor} · ${fn.cargo||'—'}</div></div><button onclick="Modals._clearFunc()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;padding:0 4px;">✕</button>`;
+    tag.innerHTML=`${Utils.avatarHtml(fn.nome,'sm')} <div><div style="font-size:13px;font-weight:500">${fn.nome}</div><div style="font-size:11px;color:var(--text-3)">${fn.setor||'-'} - ${fn.cargo||'-'}</div></div><button onclick="Modals._clearFunc()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;padding:0 4px;">x</button>`;
     tag.style.display='flex';
   },
 
@@ -166,42 +396,83 @@ const Modals = {
   },
 
   updateSaidaMax(){
-    const itemId=parseInt(document.getElementById('m-sai-item').value);
-    const item=Store.getItems().find(i=>i.id===itemId);
+    const itemId=String(document.getElementById('m-sai-item').value || '');
+    const item=this._saidaItems.find(i=>String(i.id)===itemId);
     const info=document.getElementById('m-sai-info');
-    if(item){ document.getElementById('m-sai-qtd').max=item.quantidade; if(info)info.textContent=`Disponível: ${item.quantidade} un. · R$ ${(item.valor||0).toFixed(2)} unit.`; }
-    else if(info){ info.textContent=''; }
+    if(item){
+      document.getElementById('m-sai-qtd').max=item.quantidade;
+      if(info)info.textContent=`Disponivel: ${item.quantidade} un. - R$ ${(item.valorAtual||0).toFixed(2)} unit.`;
+    } else if(info){
+      info.textContent='';
+    }
   },
 
-  saveSaida(){
-    const itemId =parseInt(document.getElementById('m-sai-item').value);
-    const qtd    =parseInt(document.getElementById('m-sai-qtd').value);
-    const funcId =parseInt(document.getElementById('m-sai-func-id').value)||null;
+  async saveSaida(){
+    const itemId = String(document.getElementById('m-sai-item').value || '').trim();
+    const qtd = parseInt(document.getElementById('m-sai-qtd').value, 10);
+    const funcId = String(document.getElementById('m-sai-func-id').value || '').trim();
     const funcNome=document.getElementById('m-sai-func-nome').value.trim();
     const funcSetor=document.getElementById('m-sai-func-setor').value.trim();
-    if(!itemId)              { Utils.notify('Selecione um item','error'); return; }
-    if(qtd<1)                { Utils.notify('Quantidade inválida','error'); return; }
-    if(!funcNome)            { Utils.notify('Selecione o funcionário','error'); return; }
-    const items=Store.getItems(), item=items.find(i=>i.id===itemId); if(!item)return;
-    if(item.quantidade<qtd)  { Utils.notify('Quantidade insuficiente!','error'); return; }
-    const saida={
-      id:Store.nextId(Store.getSaidas()), itemId, itemNome:item.descricao,
-      itemCodigo:item.codigo||'', qtd, valorUnit:item.valor||0,
-      data:document.getElementById('m-sai-data').value,
-      funcId, funcNome, setor:funcSetor,
-      obs:document.getElementById('m-sai-obs').value.trim(),
-    };
-    item.quantidade-=qtd;
-    Store.setItems(items); Store.setSaidas([...Store.getSaidas(),saida]);
-    App.addActivity(`<strong>${funcNome}</strong>: Retirada de ${item.descricao} (−${qtd}) — ${funcSetor}`,'red');
-    Utils.closeModal('modal-saida'); App.refreshCurrentPage();
-    if(item.quantidade<item.minimo) Utils.notify(`⚠ ${item.descricao} abaixo do mínimo!`,'error');
-    else Utils.notify(`Saída registrada!`);
-    // Auto-print term
-    setTimeout(()=>{ if(confirm('Imprimir termo de retirada?')) Impressao.termoRetirada(saida.id); },300);
-  },
 
-  // ---- ACESSO ----
+    if(!itemId) { Utils.notify('Selecione um item','error'); return; }
+    if(!Number.isFinite(qtd) || qtd < 1) { Utils.notify('Quantidade invalida','error'); return; }
+    if(!funcId) { Utils.notify('Selecione o funcionario','error'); return; }
+
+    let item=this._saidaItems.find(i=>String(i.id)===itemId) || null;
+    if(!item){
+      try {
+        const one = await apiClient.items.get(itemId);
+        item = this._normalizeItemForEntrada(one?.item);
+      } catch (_) {
+        item = null;
+      }
+    }
+    if(!item){ Utils.notify('Item nao encontrado','error'); return; }
+
+    if(item.quantidade < qtd){
+      Utils.notify('Saldo insuficiente para realizar saida','error');
+      return;
+    }
+
+    try {
+      const payload = {
+        itemId,
+        qtd,
+        valorUnit: Number(item.valorAtual || 0),
+        funcionarioId: funcId,
+        obs: document.getElementById('m-sai-obs').value.trim() || null,
+      };
+      const isoDate = this._toIsoDate(document.getElementById('m-sai-data').value);
+      if (isoDate) payload.data = isoDate;
+
+      const created = await apiClient.saidas.create(payload);
+      const outItemName = item.descricao || created?.saida?.item?.descricao || 'item';
+      const outFuncName = funcNome || created?.saida?.funcionario?.nome || 'Funcionario';
+      const outSetor = funcSetor || created?.saida?.setorSnapshotNome || '';
+
+      App.addActivity(`<strong>${outFuncName}</strong>: Retirada de ${outItemName} (-${qtd})${outSetor ? ` - ${outSetor}` : ''}`,'red');
+      Utils.closeModal('modal-saida');
+      App.refreshCurrentPage();
+
+      let itemAfter = null;
+      try {
+        const after = await apiClient.items.get(itemId);
+        itemAfter = this._normalizeItemForEntrada(after?.item);
+      } catch (_) {
+        itemAfter = null;
+      }
+
+      if(itemAfter && itemAfter.quantidade < itemAfter.minimo) {
+        Utils.notify(`Item ${outItemName} abaixo do minimo!`,'error');
+      } else {
+        Utils.notify('Saida registrada!');
+      }
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao registrar saida.';
+      Utils.notify(msg, 'error');
+    }
+  },
+// ---- ACESSO ----
   openAcesso(){
     document.getElementById('m-ac-nome').value ='';
     document.getElementById('m-ac-hora').value =Utils.nowTime();
@@ -216,89 +487,185 @@ const Modals = {
     if(!nome){ Utils.notify('Informe o nome','error'); return; }
     const ac={ id:Store.nextId(Store.getAcessos()), nome, tipo:document.getElementById('m-ac-tipo').value, hora:document.getElementById('m-ac-hora').value, data:document.getElementById('m-ac-data').value, cargo:document.getElementById('m-ac-cargo').value.trim() };
     Store.setAcessos([ac,...Store.getAcessos()]);
-    App.addActivity(`<strong>${ac.nome}</strong>: ${ac.tipo} — ${ac.hora}`,ac.tipo==='Entrada'?'green':'red');
+    App.addActivity(`<strong>${ac.nome}</strong>: ${ac.tipo} â€” ${ac.hora}`,ac.tipo==='Entrada'?'green':'red');
     Utils.closeModal('modal-acesso'); App.refreshCurrentPage();
     Utils.notify('Acesso registrado!');
   },
 
-  // ---- FUNCIONÁRIO ----
-  openNewFuncionario(){
-    document.getElementById('m-func-id').value    ='';
-    document.getElementById('m-func-nome').value  ='';
-    document.getElementById('m-func-cargo').value ='';
-    document.getElementById('m-func-ativo').checked=true;
-    document.getElementById('m-func-title').textContent='Novo Funcionário';
-    const setores=Store.getSetores();
-    Utils.fillSelect('m-func-setor', setores);
-    Utils.openModal('modal-funcionario');
+  // ---- FUNCIONARIO ----
+  _normalizeSetorForFuncionario(raw) {
+    if (!raw) return null;
+    return {
+      id: String(raw.id || ''),
+      nome: raw.nome || '',
+      ativo: raw.ativo !== false,
+    };
   },
 
-  editFuncionario(id){
-    const fn=Store.getFuncionarios().find(f=>f.id===id); if(!fn)return;
-    document.getElementById('m-func-id').value    =fn.id;
-    document.getElementById('m-func-nome').value  =fn.nome;
-    document.getElementById('m-func-cargo').value =fn.cargo||'';
-    document.getElementById('m-func-ativo').checked=fn.ativo!==false;
-    document.getElementById('m-func-title').textContent='Editar Funcionário';
-    const setores=Store.getSetores();
-    Utils.fillSelect('m-func-setor', setores);
-    document.getElementById('m-func-setor').value=fn.setor;
-    Utils.openModal('modal-funcionario');
+  _fillFuncionarioSetorSelect(setores, selectedId = '') {
+    const sel = document.getElementById('m-func-setor');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Selecione um setor...</option>' +
+      setores
+        .map((s) => `<option value="${s.id}"${String(s.id)===String(selectedId)?' selected':''}>${s.nome}${s.ativo===false?' (inativo)':''}</option>`)
+        .join('');
+    if (selectedId) sel.value = String(selectedId);
   },
 
-  saveFuncionario(){
-    const id   =document.getElementById('m-func-id').value;
-    const nome =document.getElementById('m-func-nome').value.trim();
-    const setor=document.getElementById('m-func-setor').value;
-    const cargo=document.getElementById('m-func-cargo').value.trim();
-    const ativo=document.getElementById('m-func-ativo').checked;
-    if(!nome){ Utils.notify('Informe o nome','error'); return; }
-    const fns=Store.getFuncionarios();
-    if(id){ const idx=fns.findIndex(f=>f.id===parseInt(id)); fns[idx]={...fns[idx],nome,setor,cargo,ativo}; }
-    else   { fns.push({id:Store.nextId(fns),nome,setor,cargo,ativo:true}); }
-    Store.setFuncionarios(fns);
-    Utils.closeModal('modal-funcionario');
-    PageFuncionarios.render();
-    Utils.notify(id?'Funcionário atualizado!':'Funcionário cadastrado!');
+  async _loadFuncionarioSetores(extraSetor = null) {
+    const rows = await this._listAll((params) => apiClient.setores.list(params), 'setores');
+    const setores = rows
+      .map((row) => this._normalizeSetorForFuncionario(row))
+      .filter((row) => row && row.id && row.nome && row.ativo !== false);
+
+    const extra = this._normalizeSetorForFuncionario(extraSetor);
+    if (extra && extra.id && !setores.some((s) => s.id === extra.id)) {
+      setores.push(extra);
+    }
+
+    this._funcSetores = setores;
+    return setores;
   },
 
-  // ---- USUÁRIO ----
+  async openNewFuncionario(){
+    try {
+      const setores = await this._loadFuncionarioSetores();
+      if (!setores.length) {
+        Utils.notify('Cadastre um setor ativo antes de criar funcionario.', 'error');
+        return;
+      }
+      document.getElementById('m-func-id').value = '';
+      document.getElementById('m-func-nome').value = '';
+      document.getElementById('m-func-cargo').value = '';
+      document.getElementById('m-func-ativo').checked = true;
+      document.getElementById('m-func-title').textContent = 'Novo Funcionario';
+      this._fillFuncionarioSetorSelect(setores);
+      Utils.openModal('modal-funcionario');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao abrir modal de funcionario.';
+      Utils.notify(msg, 'error');
+    }
+  },
+
+  async editFuncionario(id){
+    const funcionarioId = String(id || '').trim();
+    if (!funcionarioId) return;
+    try {
+      const resp = await apiClient.funcionarios.get(funcionarioId);
+      const fn = resp?.funcionario || null;
+      if (!fn) return;
+
+      const setores = await this._loadFuncionarioSetores(fn?.setor || null);
+      document.getElementById('m-func-id').value = String(fn.id || '');
+      document.getElementById('m-func-nome').value = fn.nome || '';
+      document.getElementById('m-func-cargo').value = fn.cargo || '';
+      document.getElementById('m-func-ativo').checked = fn.ativo !== false;
+      document.getElementById('m-func-title').textContent = 'Editar Funcionario';
+      this._fillFuncionarioSetorSelect(setores, String(fn.setorId || fn?.setor?.id || ''));
+      Utils.openModal('modal-funcionario');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao carregar funcionario.';
+      Utils.notify(msg, 'error');
+    }
+  },
+
+  async saveFuncionario(){
+    const id = String(document.getElementById('m-func-id').value || '').trim();
+    const nome = document.getElementById('m-func-nome').value.trim();
+    const setorId = String(document.getElementById('m-func-setor').value || '').trim();
+    const cargo = document.getElementById('m-func-cargo').value.trim();
+    const ativo = document.getElementById('m-func-ativo').checked;
+
+    if (!nome || nome.length < 2) { Utils.notify('Informe o nome do funcionario.', 'error'); return; }
+    if (!cargo || cargo.length < 2) { Utils.notify('Informe cargo com pelo menos 2 caracteres.', 'error'); return; }
+    if (!setorId) { Utils.notify('Selecione um setor.', 'error'); return; }
+
+    try {
+      if (id) {
+        await apiClient.funcionarios.update(id, { nome, cargo, setorId, ativo });
+      } else {
+        await apiClient.funcionarios.create({ nome, cargo, setorId });
+      }
+      Utils.closeModal('modal-funcionario');
+      if (App.currentPage === 'funcionarios') {
+        await PageFuncionarios.render();
+      } else {
+        App.refreshCurrentPage();
+      }
+      Utils.notify(id ? 'Funcionario atualizado!' : 'Funcionario cadastrado!');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao salvar funcionario.';
+      Utils.notify(msg, 'error');
+    }
+  },
+  // ---- USUARIO ----
   openNewUsuario(){
-    ['m-usr-id','m-usr-nome','m-usr-email','m-usr-senha'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['m-usr-id','m-usr-nome','m-usr-email','m-usr-senha'].forEach((id)=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('m-usr-role').value='operador';
     document.getElementById('m-usr-ativo').checked=true;
-    document.getElementById('m-usr-title').textContent='Novo Usuário';
+    document.getElementById('m-usr-title').textContent='Novo Usuario';
     Utils.openModal('modal-usuario');
   },
 
-  editUsuario(id){
-    const u=Store.getUsers().find(x=>x.id===id); if(!u)return;
-    document.getElementById('m-usr-id').value    =u.id;
-    document.getElementById('m-usr-nome').value  =u.nome;
-    document.getElementById('m-usr-email').value =u.email;
-    document.getElementById('m-usr-senha').value ='';
-    document.getElementById('m-usr-role').value  =u.role;
-    document.getElementById('m-usr-ativo').checked=u.ativo!==false;
-    document.getElementById('m-usr-title').textContent='Editar Usuário';
-    Utils.openModal('modal-usuario');
+  async editUsuario(id){
+    const userId = String(id || '').trim();
+    if (!userId) return;
+    try {
+      const resp = await apiClient.users.get(userId);
+      const u = resp?.user || null;
+      if(!u) return;
+      document.getElementById('m-usr-id').value = String(u.id || '');
+      document.getElementById('m-usr-nome').value = u.nome || '';
+      document.getElementById('m-usr-email').value = u.email || '';
+      document.getElementById('m-usr-senha').value = '';
+      document.getElementById('m-usr-role').value = u.role || 'operador';
+      document.getElementById('m-usr-ativo').checked = u.ativo !== false;
+      document.getElementById('m-usr-title').textContent = 'Editar Usuario';
+      Utils.openModal('modal-usuario');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao carregar usuario.';
+      Utils.notify(msg, 'error');
+    }
   },
 
-  saveUsuario(){
-    const id   =document.getElementById('m-usr-id').value;
-    const nome =document.getElementById('m-usr-nome').value.trim();
-    const email=document.getElementById('m-usr-email').value.trim();
-    const senha=document.getElementById('m-usr-senha').value.trim();
-    const role =document.getElementById('m-usr-role').value;
-    const ativo=document.getElementById('m-usr-ativo').checked;
-    if(!nome||!email){ Utils.notify('Preencha nome e e-mail.','error'); return; }
-    const users=Store.getUsers();
-    if(!id&&users.find(u=>u.email===email)){ Utils.notify('E-mail já cadastrado.','error'); return; }
-    if(id){ const idx=users.findIndex(u=>u.id===parseInt(id)); users[idx]={...users[idx],nome,email,role,ativo}; if(senha)users[idx].senha=senha; }
-    else  { if(!senha){ Utils.notify('Informe uma senha.','error'); return; } users.push({id:Store.nextId(users),nome,email,senha,role,ativo:true}); }
-    Store.setUsers(users); Utils.closeModal('modal-usuario');
-    PageUsuarios.render(); Utils.notify(id?'Usuário atualizado!':'Usuário criado!');
+  async saveUsuario(){
+    const id = String(document.getElementById('m-usr-id').value || '').trim();
+    const nome = document.getElementById('m-usr-nome').value.trim();
+    const email = document.getElementById('m-usr-email').value.trim();
+    const senha = document.getElementById('m-usr-senha').value.trim();
+    const role = document.getElementById('m-usr-role').value;
+    const ativo = document.getElementById('m-usr-ativo').checked;
+
+    if(!nome || !email){ Utils.notify('Preencha nome e e-mail.','error'); return; }
+    if(!id && !senha){ Utils.notify('Informe uma senha.','error'); return; }
+    if(senha && senha.length < 8){ Utils.notify('Senha deve ter ao menos 8 caracteres.','error'); return; }
+
+    try {
+      if (id) {
+        await apiClient.users.update(id, { nome, email, role, ativo });
+        if (senha) {
+          await apiClient.users.updatePassword(id, senha);
+        }
+      } else {
+        const created = await apiClient.users.create({ nome, email, senha, role });
+        const createdId = String(created?.user?.id || '');
+        if (createdId && !ativo) {
+          await apiClient.users.update(createdId, { ativo: false });
+        }
+      }
+
+      Utils.closeModal('modal-usuario');
+      if (App.currentPage === 'usuarios') {
+        await PageUsuarios.render();
+      } else {
+        App.refreshCurrentPage();
+      }
+      Utils.notify(id ? 'Usuario atualizado!' : 'Usuario criado!');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao salvar usuario.';
+      Utils.notify(msg, 'error');
+    }
   },
 };
-
 // Close modal on overlay click
 document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); });

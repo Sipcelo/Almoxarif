@@ -445,33 +445,35 @@ Com base na análise do estado atual, a sequência sugerida de evolução é:
 | SDD-001 | Backend bootstrap: Fastify + TS + Prisma + PostgreSQL, Auth (login/logout/me, cookie `almox_sid`, sessão em DB, sliding expiration), CRUD de Users, rate limit, error handler, AuditLog, Pino com redact | **CONCLUÍDO** | `backend/src/**`, `backend/prisma/schema.prisma` |
 | SDD-001-FIX | Correção dos desvios DV1/DV3/DV4/DV5/DV7 detectados no relatório. 40/40 testes passando em 12 arquivos. | **CONCLUÍDO** | `docs/RELATORIO-TESTES-SPEC-001.md`, `backend/test/**` |
 | SDD-002 | Employees + Settings (Funcionários, Categorias, Depósitos, Setores) | **CONCLUÍDO** | `docs/SDD-002-employees-settings.md`, `backend/src/modules/funcionarios/**`, `backend/src/modules/settings/**`, 78/78 testes em 21 arquivos (Bloco F) |
-| SDD-003 | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | Pendente | — |
-| SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | Pendente | — |
-| SDD-005 | Reports + Audit endpoints | Pendente | — |
-| SDD-006 | Deploy + Observabilidade | Pendente | — |
+| SDD-003 | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | **CONCLUÍDO** | `docs/SDD-003-Inv-Stock.md`, `backend/src/modules/inventory/**`, `backend/src/modules/stock-movements/**` |
+| SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | **CONCLUÍDO** | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/**`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/**` |
+| SDD-005 | Reports + Audit endpoints | **CONCLUÍDO** | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
+| SDD-006 | Deploy + Observabilidade | **EM IMPLEMENTACAO PARCIAL VALIDADA** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, `backend/src/infra/**`, `backend/test/production-env.test.ts`, `backend/test/health-readiness.test.ts`, `backend/test/security-headers.test.ts`, `backend/test/production-cookies.test.ts`, `backend/test/logging-production.test.ts`, `backend/test/graceful-shutdown.test.ts` |
 
 ### Riscos da §6 já mitigados pelo SDD-001+FIX
 
 - **S1** senhas em texto puro → resolvido (bcrypt salt 12 no backend; seed `admin@rodoviariapel.com/admin2026` e `op@rodoviariapel.com/operador2026`).
 - **S2** auth client-side → resolvido no backend (sessão server-side em DB com cookie `almox_sid` httpOnly).
-- **S3** autorização por UI → mitigado no backend (`requireAuth` + `requireRole`); frontend ainda depende de integração SDD-004.
+- **S3** autorização por UI → resolvido no fluxo principal (backend `requireAuth` + `requireRole` consumido via `apiClient`).
 - **S4** sessão sem expiração → resolvido (sliding expiration configurável, TTL 8h default).
 - **S5** sem rate limit → resolvido (global + por rota, configurável via env).
-- **S7** dados manipuláveis via console → mitigado para Users/Session/Audit; persiste para entidades ainda no localStorage até SDD-003/004.
+- **S7** dados manipuláveis via console → resolvido para o fluxo principal; persistência oficial fica no backend.
 
 ### Débitos registrados (não bloqueantes)
 
-- CA-A4: teste explícito de login com `ativo=false` (coberto indiretamente por session-invalidation).
-- CA-I2: resposta 503 quando DB cai — não implementado.
-- CA-I3: validação de boot sem `SESSION_SECRET` — não implementado.
+- Nenhum débito de feature gap aberto em 2026-04-24.
 
-### Onde começar SDD-002
+### Estado atual SDD-006
 
-Base operacional já disponível:
-- Infra: `backend/src/app/server.ts`, `backend/src/infra/error-handler.ts`, middleware `requireAuth`/`requireRole`.
-- Padrões: `AppError` + 7 códigos canônicos, Zod com `.strip()`, AuditLog persistente, snake_case via `@map`.
-- Tests: `backend/test/helpers.ts` com `seedAdmin`, `loginAsAdmin`, `cleanDatabase`.
-- Modelo legado a migrar (ver §3): `alm_funcionarios` `[{id, nome, setor, cargo, ativo}]`, `alm_setores` `[string]`, `alm_categorias` `[string]`, `alm_depositos` `[string]`.
+Base operacional ja validada:
+- SPEC aprovada: `docs/SDD-006-deploy-observabilidade.md`.
+- DESIGN aprovado: `docs/SDD-006-DESIGN-deploy-observabilidade.md`.
+- Infra implementada: env produtiva, health live/ready, security headers, logging/redact, graceful shutdown, cookies Secure em producao e baseline migration.
+- Runbooks criados: `docs/runbooks/SDD-006-deploy.md`, `docs/runbooks/SDD-006-rollback.md`, `docs/runbooks/SDD-006-backup-restore.md`, `docs/runbooks/SDD-006-db-down.md`, `docs/runbooks/SDD-006-secret-rotation.md`.
+- Runner validado: `npm test` no backend com `48/48` arquivos e `232/232` testes; `npm run test:frontend` com `62/62`; build backend passando.
+- Migration validada: `prisma migrate deploy` aplicou `00000000000000_baseline` em banco PostgreSQL temporario limpo.
+- Alvo operacional definido: Railway Node service + PostgreSQL gerenciado.
+- Pendente para fechamento total: smoke/deploy real no Railway e registro final de riscos residuais.
 
 ---
 

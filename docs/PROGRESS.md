@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-18 (pós PR-3 SDD-004: refactor Painel/Dashboard via apiClient)
+> **Última atualização:** 2026-04-26 (SDD-006 implementação parcial validada)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -10,15 +10,15 @@
 
 | Métrica | Valor |
 |---------|-------|
-| SDDs concluídos | **3 de 6** (SDD-001 + SDD-002 + SDD-003; SDD-001-FIX concluído como adendo) |
-| SDDs pendentes | 3 (SDD-004, SDD-005, SDD-006) |
-| Testes totais | **231/231 passando** (170 backend + 61 frontend apiClient) |
-| Arquivos de teste | 39 (38 backend + 1 frontend) |
+| SDDs concluídos | **5 de 6** (SDD-001 + SDD-002 + SDD-003 + SDD-004 + SDD-005; SDD-001-FIX concluido como adendo) |
+| SDDs pendentes | 1 (SDD-006 em implementação parcial; deploy final/smoke real pendente) |
+| Testes totais | **294/294 passando** (232 backend + 62 frontend apiClient) |
+| Arquivos de teste | 49 (48 backend + 1 frontend) |
 | Testes `skip`/`todo` | 0 |
-| Tempo de execucao da suite | ~52s |
+| Tempo de execucao da suite | ~47s (backend 45.57s + frontend 1.14s) |
 | TypeScript `tsc --noEmit` | ✅ limpo |
 | Débitos técnicos de código | **ZERO** |
-| Débitos de feature gap | 3 (CA-A4, CA-I2, CA-I3 — registrados, não bloqueantes) |
+| Débitos de feature gap | **ZERO** (CA-A4, CA-I2 e CA-I3 fechados em 2026-04-18) |
 
 ---
 
@@ -30,9 +30,9 @@
 | **SDD-001-FIX** | Correção DV1/DV3/DV4/DV5/DV7 + clean-code zero-débito (Bloco E: paginação de users) | ✅ **CONCLUÍDO** | 46 (cumulativo) | `RELATORIO-TESTES-SPEC-001.md` Blocos A-E |
 | **SDD-002** | Employees + Settings (Funcionários, Setores, Categorias, Depósitos) | ✅ **CONCLUÍDO** | 78 (cumulativo, +32) | `docs/SDD-002-employees-settings.md`, Bloco F |
 | **SDD-003** | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | ✅ **CONCLUÍDO** | 160 (cumulativo, +27) | `docs/SDD-003-Inv-Stock.md`, `docs/SDD-003-DESIGN-Inv-Stock.md`, Bloco H |
-| **SDD-004** | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | 🚧 **Em progresso** (PR-1 CSRF + PR-2 login + PR-3 Painel) | 170 backend + 61 frontend | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/auth.js`, `front/js/pages/dashboard.js`, `e2e/tests/01-login.spec.ts`, `e2e/tests/02-painel.spec.ts` |
-| **SDD-005** | Reports + Audit endpoints | ⏸ Pendente | — | — |
-| **SDD-006** | Deploy + Observabilidade | ⏸ Pendente | — | — |
+| **SDD-004** | Integracao Frontend ↔ Backend (substituir localStorage por fetch API) | ✅ **CONCLUIDO** (PR-1 ao PR-9 + Addendum A Acessos) | 180 backend + 62 frontend | `apiClient.js`, `front/js/auth.js`, `front/js/pages/dashboard.js`, `front/js/pages/pages.js`, `front/js/modals.js`, `front/js/utils.js`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/08-usuarios.spec.ts`, `e2e/tests/09-relatorios.spec.ts` |
+| **SDD-005** | Reports + Audit endpoints | ✅ **CONCLUÍDO** | 213 backend (cumulativo, +33) | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
+| **SDD-006** | Deploy + Observabilidade | **EM IMPLEMENTAÇÃO PARCIAL VALIDADA** | 232 backend (cumulativo, +19) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/logger-options.ts`, `backend/src/infra/shutdown.ts`, `backend/prisma/migrations/00000000000000_baseline/migration.sql`, `backend/test/production-env.test.ts`, `backend/test/health-readiness.test.ts`, `backend/test/security-headers.test.ts`, `backend/test/production-cookies.test.ts`, `backend/test/logging-production.test.ts`, `backend/test/graceful-shutdown.test.ts` |
 
 ---
 
@@ -63,6 +63,9 @@ backend/src/modules/
 ├── funcionarios/      ✅ SDD-002 — CRUD, guards (setor usable), paginação, audit
 ├── inventory/         ✅ SDD-003 — items CRUD, regras de saldo, paginação, auditoria
 ├── stock-movements/   ✅ SDD-003 — entradas, saídas, ajustes, transações e concorrência
+├── acessos/           ✅ SDD-004 Addendum A — controle de acessos fisicos
+├── reports/           ✅ SDD-005 — métricas, movimentações, por setor, snapshot de estoque
+├── audit/             ✅ SDD-005 — consulta paginada e filtrada de AuditLog
 └── settings/
     ├── setores/       ✅ SDD-002 — CRUD, normalização, guard de vínculos ativos
     ├── categorias/    ✅ SDD-002 — CRUD, normalização
@@ -102,9 +105,18 @@ backend/src/modules/
 | POST | `/api/v1/settings/depositos` | cookie | admin | depositos |
 | PUT | `/api/v1/settings/depositos/:id` | cookie | admin | depositos |
 | DELETE | `/api/v1/settings/depositos/:id` | cookie | admin | depositos |
+| GET | `/api/v1/acessos` | cookie | admin | acessos |
+| POST | `/api/v1/acessos` | cookie | admin | acessos |
+| GET | `/api/v1/reports/metricas` | cookie | qualquer | reports |
+| GET | `/api/v1/reports/movimentacoes` | cookie | qualquer | reports |
+| GET | `/api/v1/reports/por-setor` | cookie | qualquer | reports |
+| GET | `/api/v1/reports/estoque` | cookie | qualquer | reports |
+| GET | `/api/v1/audit` | cookie | admin | audit |
+| GET | `/health/live` | público | — | infra |
+| GET | `/health/ready` | público | — | infra |
 | GET | `/health` | público | — | infra |
 
-**Total:** 44 endpoints ativos.
+**Total:** 53 endpoints ativos.
 
 ### 3.4 Modelo de dados (Prisma)
 
@@ -121,6 +133,7 @@ backend/src/modules/
 | `Entrada` | id UUID, itemId, qtd, valorUnit, data, responsavelUserId | Item, User |
 | `Saida` | id UUID, itemId, funcionarioId, qtd, valorUnit, snapshot setor | Item, Funcionario, Setor, User |
 | `Ajuste` | id UUID, itemId, qtdAnterior, qtdNova, motivo, responsavelUserId | Item, User |
+| `Acesso` | id UUID, nome, tipo, hora, data, responsavelUserId | User |
 
 ### 3.5 Invariantes garantidas pelo backend
 
@@ -149,13 +162,38 @@ backend/src/modules/
 
 Ativado via `SEED_ENABLED=true`.
 
+### 3.7 Infra SDD-006 implementada parcialmente
+
+| Item | Status | Evidência |
+|------|--------|-----------|
+| Validação de env produtiva | ✅ implementado | `backend/src/config/env.ts` |
+| Bloqueio de `CORS_ORIGIN=*` em produção | ✅ implementado | `backend/test/production-env.test.ts` |
+| Bloqueio de `SEED_ENABLED=true` em produção | ✅ implementado | `backend/test/production-env.test.ts` |
+| Exigência de PostgreSQL em produção | ✅ implementado | `backend/test/production-env.test.ts` |
+| Health liveness/readiness | ✅ implementado | `backend/src/infra/healthcheck.ts`, `backend/test/health-readiness.test.ts` |
+| Security headers mínimos | ✅ implementado | `backend/src/infra/security-headers.ts`, `backend/test/security-headers.test.ts` |
+| Cookies `Secure` em produção | ✅ testado | `backend/test/production-cookies.test.ts` |
+| Logger/redact operacional | ✅ implementado | `backend/src/infra/logger-options.ts`, `backend/test/logging-production.test.ts` |
+| Graceful shutdown | ✅ implementado | `backend/src/infra/shutdown.ts`, `backend/test/graceful-shutdown.test.ts` |
+| Scripts operacionais | ✅ implementado | `backend/package.json` |
+| `.env.example` de produção | ✅ atualizado | `backend/.env.example` |
+| Baseline migration Prisma | ✅ criada e validada em banco limpo | `backend/prisma/migrations/00000000000000_baseline/migration.sql` |
+| Runbooks operacionais | ✅ criados | `docs/runbooks/SDD-006-deploy.md`, `docs/runbooks/SDD-006-rollback.md`, `docs/runbooks/SDD-006-backup-restore.md`, `docs/runbooks/SDD-006-db-down.md`, `docs/runbooks/SDD-006-secret-rotation.md` |
+| Revisão DoD contra SPEC/DESIGN | ✅ realizada | `docs/SDD-006-DOD-review.md` |
+| Alvo operacional do deploy | ✅ definido | Railway Node service + PostgreSQL gerenciado |
+
+Pendências para fechamento do SDD-006:
+
+- Executar smoke test de deploy real quando o alvo operacional estiver disponível.
+- Registrar riscos residuais e evidências finais antes de marcar o SDD como concluído.
+
 ---
 
 ## 4. Frontend — Estado Atual
 
-**Status:** inalterado desde antes do SDD-001. Continua com localStorage (`alm_*`).
+**Status:** integrado ao backend no SDD-004 (PR-9).
 
-Frontend NÃO consome backend ainda. Integração programada para **SDD-004**.
+Frontend consome backend via `apiClient` como fonte de verdade para auth, painel, estoque, entradas, saidas, funcionarios, configuracoes, usuarios e relatorios.
 
 ### Arquivos legados (raiz do repositório)
 
@@ -164,22 +202,22 @@ index.html, variables.css, components.css, layout.css, login.css
 data.js, utils.js, auth.js, modals.js, app.js, dashboard.js, pages.js
 ```
 
-Todas as entidades do frontend (`alm_items`, `alm_entradas`, `alm_saidas`, `alm_acessos`, `alm_funcionarios`, `alm_setores`, `alm_categorias`, `alm_depositos`) permanecem em localStorage até SDD-004.
+As entidades de negocio nao usam mais `localStorage` como fonte de verdade. A exportacao JSON em `Utils.exportJSON()` agora busca dados do backend/cache de pagina.
 
-### Riscos do frontend ainda vigentes (§6 do CLAUDE.md)
+### Riscos do frontend apos SDD-004
 
 | # | Risco | Severidade | Mitigação planejada |
 |---|-------|-----------|---------------------|
-| S1-S7 | Senhas em texto puro, auth client-side, autorização por UI, dados no console | CRÍTICO | Mitigado no backend; removido do frontend em SDD-004 |
-| D1-D6 | Sem transacionalidade, sem UUID, dados desnormalizados | CRÍTICO | Resolvido por SDD-003 (movimentos) + SDD-004 (integração) |
-| A1-A4 | Sem auditoria | ALTO | Resolvido no backend; exposto no frontend em SDD-005 |
-| P1-P4 | localStorage inadequado | ALTO | Substituído por API em SDD-004 |
+| S1-S7 | Senhas em texto puro, auth client-side, autorizacao por UI, dados no console | CRITICO | Encerrado no fluxo principal (backend + apiClient) |
+| D1-D6 | Sem transacionalidade, sem UUID, dados desnormalizados | CRITICO | Encerrado com backend transacional + integracao frontend |
+| A1-A4 | Sem auditoria | ALTO | Encerrado no backend; consulta paginada de AuditLog exposta no SDD-005 |
+| P1-P4 | localStorage inadequado | ALTO | Encerrado (persistencia principal no backend) |
 
 ---
 
 ## 5. Testes — Inventário Canônico
 
-**Regra de ouro:** nenhum SDD avança se qualquer teste existente falhar. Detalhes completos em [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md).
+**Regra de ouro:** nenhum SDD avança se qualquer teste existente falhar. O [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md) cobre o histórico acumulado até a implementação parcial do SDD-006.
 
 | Bloco | Arquivos | Testes |
 |-------|----------|--------|
@@ -191,23 +229,35 @@ Todas as entidades do frontend (`alm_items`, `alm_entradas`, `alm_saidas`, `alm_
 | H — SDD-003 | `items-*`, `entradas`, `saidas`, `ajustes`, `stock-*` (9 arquivos) | 27 |
 | Reconciliação 2026-04-18 | `session-hardening` 7 → 8 + ajuste de soma em Bloco G | +2 |
 | I — SDD-004 PR-1 (CSRF) | `csrf.test.ts` | 8 |
-| **TOTAL** | **38 arquivos** | **170** |
+| J — SDD-004 Addendum A | `acessos.test.ts` | 5 |
+| K — SDD-004 PR-9 (import legacy) | `import-legacy.test.ts` | 5 |
+| L — SDD-005 Reports + Audit | `reports.test.ts`, `audit-query.test.ts` | 33 |
+| M — SDD-006 Deploy + Observabilidade | `production-env`, `health-readiness`, `security-headers`, `production-cookies`, `logging-production`, `graceful-shutdown` (6 arquivos) | 19 |
+| **TOTAL BACKEND** | **48 arquivos** | **232** |
+| Frontend apiClient | `test-frontend/apiClient.test.ts` | 62 |
+| **TOTAL GERAL** | **49 arquivos** | **294** |
 
 ### Comando canônico
 
 ```bash
 cd backend
-# Unix
-DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test npx vitest run --reporter=basic
-# Windows (cmd)
-set DATABASE_URL=postgresql://postgres:123456@localhost:5432/almox_test
-npx vitest run --reporter=basic
-# Windows (PowerShell)
-$env:DATABASE_URL="postgresql://postgres:123456@localhost:5432/almox_test"
-npx vitest run --reporter=basic
+npm test
 ```
 
-**Resultado esperado:** `Test Files 38 passed (38) | Tests 170 passed (170)`.
+**Resultado esperado:** `Test Files 48 passed (48) | Tests 232 passed (232)`.
+
+Frontend:
+
+```bash
+npm run test:frontend
+```
+
+**Resultado esperado:** `Test Files 1 passed (1) | Tests 62 passed (62)`.
+
+Observações:
+
+- `pretest` carrega `backend/.env.test` via `backend/scripts/test-pretest.ts`; `backend/.env` não é necessário para a suite.
+- Vitest backend roda em `pool: "threads"` com `singleThread: true`, pois a suíte usa banco compartilhado `almox_test`.
 
 ---
 
@@ -217,30 +267,34 @@ npx vitest run --reporter=basic
 
 **ZERO.** Política do projeto: nenhum SDD avança com débito técnico em aberto.
 
-### 6.2 Débitos de feature gap (registrados, não bloqueantes)
+### 6.2 Débitos de feature gap
 
-| # | Item | Severidade | Escopo |
-|---|------|-----------|--------|
-| CA-A4 | Teste explícito de login com `ativo=false` (hoje coberto indiretamente) | BAIXO | Próxima iteração de auth |
-| CA-I2 | Resposta 503 quando DB cai | BAIXO | SDD-006 (observabilidade) |
-| CA-I3 | Validação de boot quando `SESSION_SECRET` ausente | BAIXO | SDD-006 |
+**ZERO em aberto.**
+
+Fechados em 2026-04-18:
+
+| # | Item | Status | Evidência |
+|---|------|--------|-----------|
+| CA-A4 | Teste explícito de login com `ativo=false` | PASS | `backend/test/auth-hardening.test.ts` |
+| CA-I2 | Resposta 503 quando DB cai | PASS | `backend/test/infra-failure.test.ts` |
+| CA-I3 | Validação de boot quando `SESSION_SECRET` ausente | PASS | `backend/test/infra-failure.test.ts` |
+
+Comando executado para validação do fechamento:
+
+`npm --prefix backend run test -- test/auth-hardening.test.ts test/infra-failure.test.ts` -> `11/11` testes PASS.
 
 ---
 
 ## 7. Próximos Passos
 
-### 7.1 Imediato — SDD-004 (Integração Frontend ↔ Backend)
+### 7.1 Imediato — SDD-006 (Deploy + Observabilidade)
 
 Escopo imediato:
-- substituir camada local (`DB`/`Store`) por `fetch` com cookie credentials
-- manter fluxo incremental sem ruptura de telas
-- fechar contratos de erro e autorização já ativos no backend
+- executar smoke test de deploy real quando o alvo operacional estiver disponível
 
 ### 7.2 Médio prazo
 
-- **SDD-004** Integração frontend: substituir camada `DB`/`Store` por `apiClient` com fetch + cookie credentials
-- **SDD-005** Endpoints de relatórios e consulta de AuditLog paginado
-- **SDD-006** Deploy (Render/Railway/VPS) + observabilidade (healthcheck completo, métricas, alertas)
+- Fechamento operacional do **SDD-006** no alvo aprovado: Railway Node service + PostgreSQL gerenciado.
 
 ---
 
@@ -248,8 +302,8 @@ Escopo imediato:
 
 1. **SDD rigoroso** — toda demanda passa por SPEC → aprovação → DESIGN → implementação (§11 do CLAUDE.md)
 2. **Zero débito técnico** — nenhum SDD fecha com débito em aberto (diretriz do usuário em 2026-04-16)
-3. **Regressão zero** — inventário de 170 testes deve continuar passando integralmente
-4. **Migração incremental** — frontend permanece até SDD-004; nada é quebrado sem substituto pronto
+3. **Regressao zero** — inventario de 232 testes backend + 62 frontend deve continuar passando integralmente
+4. **Migracao incremental** — SDD-004 concluido; proximos modulos sem ruptura de contratos
 5. **Sem framework frontend** — frontend puro mantido até decisão explícita em contrário
 6. **Mensagens em português** — toda resposta de erro visível ao usuário final
 7. **Logs sem segredos** — Pino redact obrigatório para senha, cookie, authorization
@@ -266,6 +320,17 @@ Escopo imediato:
 | 2026-04-17 | SDD-TEST-002A concluido. Baseline atualizado para 133/133 em 28 arquivos. |
 | 2026-04-17 | SDD-003 concluido. Baseline atualizado para 160/160 em 37 arquivos. 44 endpoints ativos. |
 | 2026-04-18 | Reconciliação de contagem: baseline real é 162/162 em 37 arquivos (Bloco G somou +2). |
+| 2026-04-18 | SDD-004 Addendum A aprovado e implementado: modulo de acessos antecipado (backend + frontend). |
+| 2026-04-20 | SDD-004 encerrado com PR-9 (Usuarios + Relatorios + importacao legacy). |
+| 2026-04-20 | Baseline de testes atualizada: backend 40/180 e suite total 242/242 (inclui frontend 62/62). |
+| 2026-04-24 | SDD-005 transplantado do worktree para o principal. Baseline backend 42/213 e suite total 275/275. |
+| 2026-04-24 | SPEC e DESIGN do SDD-006 aprovados no principal. |
+| 2026-04-26 | SDD-006 parcialmente implementado e validado: env produtiva, health live/ready, security headers, cookies Secure em produção, logging redact, graceful shutdown e baseline migration. Backend 48/232, frontend 1/62 e build backend passando. |
+| 2026-04-26 | Runbooks operacionais do SDD-006 criados: deploy, rollback, backup/restore, banco indisponível e rotação de secret. |
+| 2026-04-26 | Baseline migration validada com `prisma migrate deploy` em banco PostgreSQL temporário limpo; migration `00000000000000_baseline` aplicada com sucesso e banco temporário removido. |
+| 2026-04-26 | `RELATORIO-TESTES-SPEC-001.md` atualizado com Bloco M do SDD-006, inventário canônico 48/232 backend, validações complementares e riscos residuais. |
+| 2026-04-26 | DoD do SDD-006 revisado contra SPEC/DESIGN em `docs/SDD-006-DOD-review.md`; DoD técnico/documental local PASS, fechamento operacional pendente de smoke/deploy real. |
+| 2026-04-26 | Alvo operacional definido como Railway; DESIGN, SPEC, runbook de deploy, PROGRESS e DoD atualizados para Railway Node service + PostgreSQL gerenciado. |
 
 ---
 
@@ -274,8 +339,14 @@ Escopo imediato:
 - **Contexto técnico:** [`CLAUDE.md`](../CLAUDE.md)
 - **SPEC SDD-001:** [`docs/SDD-001-bootstrap-auth-users.md`](./SDD-001-bootstrap-auth-users.md)
 - **SPEC SDD-001-FIX:** [`docs/SDD-001-FIX-correcao-desvios.md`](./SDD-001-FIX-correcao-desvios.md)
+- **SPEC SDD-001 Addendum (CA-A4/CA-I2/CA-I3):** [`docs/SDD-001-ADDENDUM-ca-a4-i2-i3.md`](./SDD-001-ADDENDUM-ca-a4-i2-i3.md)
 - **SPEC SDD-002:** [`docs/SDD-002-employees-settings.md`](./SDD-002-employees-settings.md)
-- **Relatório de testes (fonte da verdade):** [`docs/RELATORIO-TESTES-SPEC-001.md`](./RELATORIO-TESTES-SPEC-001.md)
+- **SPEC SDD-004 Addendum A:** [`docs/SDD-004-ADDENDUM-acessos.md`](./SDD-004-ADDENDUM-acessos.md)
+- **SPEC SDD-005:** [`docs/SDD-005-reports-audit.md`](./SDD-005-reports-audit.md)
+- **SPEC SDD-006:** [`docs/SDD-006-deploy-observabilidade.md`](./SDD-006-deploy-observabilidade.md)
+- **DESIGN SDD-006:** [`docs/SDD-006-DESIGN-deploy-observabilidade.md`](./SDD-006-DESIGN-deploy-observabilidade.md)
+- **DoD SDD-006:** [`docs/SDD-006-DOD-review.md`](./SDD-006-DOD-review.md)
+- **Relatório de testes:** [`docs/RELATORIO-TESTES-SPEC-001.md`](./RELATORIO-TESTES-SPEC-001.md)
 - **Schema Prisma:** [`backend/prisma/schema.prisma`](../backend/prisma/schema.prisma)
 - **Seed:** [`backend/prisma/seed.ts`](../backend/prisma/seed.ts)
 

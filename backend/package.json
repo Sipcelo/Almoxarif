@@ -7,9 +7,12 @@
     "build": "tsc",
     "start": "node dist/app/server.js",
     "test": "vitest run",
-    "pretest": "prisma generate && prisma db push --accept-data-loss",
+    "pretest": "tsx scripts/test-pretest.ts",
+    "predeploy": "npm test && npm run build",
+    "deploy:check": "npm run prisma:generate && npm run build",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
