@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-28 (SDD-006 deploy Railway com health real validado)
+> **Última atualização:** 2026-04-28 (SDD-006 health real + bootstrap admin definido)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -12,10 +12,10 @@
 |---------|-------|
 | SDDs concluídos | **5 de 6** (SDD-001 + SDD-002 + SDD-003 + SDD-004 + SDD-005; SDD-001-FIX concluido como adendo) |
 | SDDs pendentes | 1 (SDD-006 com deploy/health real validado; smoke autenticado, logs e backup pendentes) |
-| Testes totais | **294/294 passando** (232 backend + 62 frontend apiClient) |
-| Arquivos de teste | 49 (48 backend + 1 frontend) |
+| Testes totais | **298/298 passando** (236 backend + 62 frontend apiClient) |
+| Arquivos de teste | 50 (49 backend + 1 frontend) |
 | Testes `skip`/`todo` | 0 |
-| Tempo de execucao da suite | ~47s (backend 45.57s + frontend 1.14s) |
+| Tempo de execucao da suite | ~48s (backend 46.41s + frontend 1.14s) |
 | TypeScript `tsc --noEmit` | ✅ limpo |
 | Débitos técnicos de código | **ZERO** |
 | Débitos de feature gap | **ZERO** (CA-A4, CA-I2 e CA-I3 fechados em 2026-04-18) |
@@ -32,7 +32,7 @@
 | **SDD-003** | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | ✅ **CONCLUÍDO** | 160 (cumulativo, +27) | `docs/SDD-003-Inv-Stock.md`, `docs/SDD-003-DESIGN-Inv-Stock.md`, Bloco H |
 | **SDD-004** | Integracao Frontend ↔ Backend (substituir localStorage por fetch API) | ✅ **CONCLUIDO** (PR-1 ao PR-9 + Addendum A Acessos) | 180 backend + 62 frontend | `apiClient.js`, `front/js/auth.js`, `front/js/pages/dashboard.js`, `front/js/pages/pages.js`, `front/js/modals.js`, `front/js/utils.js`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/08-usuarios.spec.ts`, `e2e/tests/09-relatorios.spec.ts` |
 | **SDD-005** | Reports + Audit endpoints | ✅ **CONCLUÍDO** | 213 backend (cumulativo, +33) | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
-| **SDD-006** | Deploy + Observabilidade | **DEPLOY/HEALTH REAL VALIDADO PARCIALMENTE** | 232 backend (cumulativo, +19) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/logger-options.ts`, `backend/src/infra/shutdown.ts`, `backend/prisma/migrations/00000000000000_baseline/migration.sql`, Railway `https://almoxarif-production.up.railway.app`, commit `c6575e5`, `/health/live` 200, `/health/ready` 200 com `database=connected` |
+| **SDD-006** | Deploy + Observabilidade | **DEPLOY/HEALTH REAL VALIDADO PARCIALMENTE** | 236 backend (cumulativo, +23) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/logger-options.ts`, `backend/src/infra/shutdown.ts`, `backend/scripts/bootstrap-admin.ts`, Railway `https://almoxarif-production.up.railway.app`, commit `c6575e5`, `/health/live` 200, `/health/ready` 200 com `database=connected` |
 
 ---
 
@@ -176,6 +176,7 @@ Ativado via `SEED_ENABLED=true`.
 | Logger/redact operacional | ✅ implementado | `backend/src/infra/logger-options.ts`, `backend/test/logging-production.test.ts` |
 | Graceful shutdown | ✅ implementado | `backend/src/infra/shutdown.ts`, `backend/test/graceful-shutdown.test.ts` |
 | Scripts operacionais | ✅ implementado | `backend/package.json` |
+| Bootstrap controlado de admin | ✅ implementado e testado | `backend/scripts/bootstrap-admin.ts`, `backend/test/bootstrap-admin.test.ts`, script `npm run bootstrap:admin` |
 | `.env.example` de produção | ✅ atualizado | `backend/.env.example` |
 | Baseline migration Prisma | ✅ criada e validada em banco limpo | `backend/prisma/migrations/00000000000000_baseline/migration.sql` |
 | Runbooks operacionais | ✅ criados | `docs/runbooks/SDD-006-deploy.md`, `docs/runbooks/SDD-006-rollback.md`, `docs/runbooks/SDD-006-backup-restore.md`, `docs/runbooks/SDD-006-db-down.md`, `docs/runbooks/SDD-006-secret-rotation.md` |
@@ -187,7 +188,7 @@ Ativado via `SEED_ENABLED=true`.
 
 Pendências para fechamento do SDD-006:
 
-- Definir e executar bootstrap controlado de usuário inicial/admin no banco produtivo.
+- Executar bootstrap controlado de usuário inicial/admin no banco produtivo.
 - Reexecutar smoke autenticado/API real após bootstrap.
 - Validar logs reais do Railway sem exposição de secrets.
 - Confirmar política de backup gerenciado/manual no Railway.
@@ -238,10 +239,10 @@ As entidades de negocio nao usam mais `localStorage` como fonte de verdade. A ex
 | J — SDD-004 Addendum A | `acessos.test.ts` | 5 |
 | K — SDD-004 PR-9 (import legacy) | `import-legacy.test.ts` | 5 |
 | L — SDD-005 Reports + Audit | `reports.test.ts`, `audit-query.test.ts` | 33 |
-| M — SDD-006 Deploy + Observabilidade | `production-env`, `health-readiness`, `security-headers`, `production-cookies`, `logging-production`, `graceful-shutdown` (6 arquivos) | 19 |
-| **TOTAL BACKEND** | **48 arquivos** | **232** |
+| M — SDD-006 Deploy + Observabilidade | `production-env`, `health-readiness`, `security-headers`, `production-cookies`, `logging-production`, `graceful-shutdown`, `bootstrap-admin` (7 arquivos) | 23 |
+| **TOTAL BACKEND** | **49 arquivos** | **236** |
 | Frontend apiClient | `test-frontend/apiClient.test.ts` | 62 |
-| **TOTAL GERAL** | **49 arquivos** | **294** |
+| **TOTAL GERAL** | **50 arquivos** | **298** |
 
 ### Comando canônico
 
@@ -250,7 +251,7 @@ cd backend
 npm test
 ```
 
-**Resultado esperado:** `Test Files 48 passed (48) | Tests 232 passed (232)`.
+**Resultado esperado:** `Test Files 49 passed (49) | Tests 236 passed (236)`.
 
 Frontend:
 
@@ -296,7 +297,7 @@ Comando executado para validação do fechamento:
 ### 7.1 Imediato — SDD-006 (Deploy + Observabilidade)
 
 Escopo imediato:
-- definir bootstrap controlado de usuário inicial/admin para produção
+- executar bootstrap controlado de usuário inicial/admin no Railway
 - reexecutar smoke autenticado/API real no Railway após bootstrap
 - validar logs reais do Railway sem secrets
 - confirmar backup gerenciado ou runbook manual aplicável ao plano atual
@@ -311,7 +312,7 @@ Escopo imediato:
 
 1. **SDD rigoroso** — toda demanda passa por SPEC → aprovação → DESIGN → implementação (§11 do CLAUDE.md)
 2. **Zero débito técnico** — nenhum SDD fecha com débito em aberto (diretriz do usuário em 2026-04-16)
-3. **Regressao zero** — inventario de 232 testes backend + 62 frontend deve continuar passando integralmente
+3. **Regressao zero** — inventario de 236 testes backend + 62 frontend deve continuar passando integralmente
 4. **Migracao incremental** — SDD-004 concluido; proximos modulos sem ruptura de contratos
 5. **Sem framework frontend** — frontend puro mantido até decisão explícita em contrário
 6. **Mensagens em português** — toda resposta de erro visível ao usuário final
@@ -342,6 +343,7 @@ Escopo imediato:
 | 2026-04-26 | Alvo operacional definido como Railway; DESIGN, SPEC, runbook de deploy, PROGRESS e DoD atualizados para Railway Node service + PostgreSQL gerenciado. |
 | 2026-04-28 | Deploy real no Railway validado parcialmente: commit `c6575e5`, `prisma migrate deploy` sem pendências, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`. |
 | 2026-04-28 | Smoke autenticado/API real tentado no Railway; login com admin e operador padrão retornou 401. Evidência indica banco produtivo sem usuário inicial porque `SEED_ENABLED=false` é obrigatório em produção. Fechamento segue bloqueado até bootstrap controlado. |
+| 2026-04-28 | Bootstrap controlado de admin definido em `backend/scripts/bootstrap-admin.ts`, com confirmação explícita, no-op quando já existe admin ativo, audit log `ADMIN_BOOTSTRAPPED` e 4 testes. Baseline backend atualizado para 49/236. |
 
 ---
 

@@ -9,6 +9,8 @@
     "test": "vitest run",
     "pretest": "tsx scripts/test-pretest.ts",
     "predeploy": "npm test && npm run build",
+    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
+    "bootstrap:admin:dist": "node dist/scripts/bootstrap-admin.js",
     "deploy:check": "npm run prisma:generate && npm run build",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

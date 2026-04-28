@@ -38,7 +38,7 @@ npm run test:frontend
 
 Resultado esperado:
 
-- Backend: `48 passed`, `232 passed`.
+- Backend: `49 passed`, `236 passed`.
 - Frontend: `1 passed`, `62 passed`.
 - TypeScript sem erro.
 
@@ -180,12 +180,68 @@ curl -i https://<dominio-railway>/health
 
 Resultado esperado: mesmo contrato de readiness.
 
-15. Executar smoke login com usuario controlado.
-16. Verificar logs do Railway.
+15. Se ainda nao existir admin ativo no banco produtivo, executar bootstrap controlado de admin.
+16. Executar smoke login com usuario controlado.
+17. Verificar logs do Railway.
 
 ---
 
-## 8. Smoke login
+## 8. Bootstrap controlado de admin
+
+Usar somente quando o banco produtivo estiver sem usuario admin ativo. Nao substituir por `SEED_ENABLED=true` em producao.
+
+Variaveis temporarias obrigatorias no Railway:
+
+```env
+BOOTSTRAP_CONFIRM=CREATE_INITIAL_ADMIN
+BOOTSTRAP_ADMIN_EMAIL=<email-admin-controlado>
+BOOTSTRAP_ADMIN_PASSWORD=<senha-temporaria-forte-12-a-128-caracteres>
+BOOTSTRAP_ADMIN_NAME=<nome-do-admin>
+```
+
+Regras:
+
+- Nao registrar a senha em chat, ticket, commit ou print.
+- Rodar em one-off command/job no servico backend, apontando para o mesmo `DATABASE_URL` produtivo.
+- Se ja existir admin ativo, o script deve retornar `action="skipped"` e nao alterar o banco.
+- Se criar/promover admin, deve registrar AuditLog `ADMIN_BOOTSTRAPPED`.
+- Remover as variaveis temporarias de bootstrap apos execucao, ou ao menos remover/rotacionar `BOOTSTRAP_ADMIN_PASSWORD`.
+
+Comando preferencial no artefato buildado:
+
+```bash
+npm run bootstrap:admin:dist
+```
+
+Fallback se o shell one-off executar em contexto fonte com dev dependencies disponiveis:
+
+```bash
+npm run bootstrap:admin
+```
+
+Saidas esperadas:
+
+```json
+{ "action": "created", "userId": "...", "email": "..." }
+```
+
+ou:
+
+```json
+{ "action": "promoted", "userId": "...", "email": "..." }
+```
+
+ou:
+
+```json
+{ "action": "skipped", "reason": "ja existe admin ativo" }
+```
+
+Depois do bootstrap, executar imediatamente o smoke login. Em caso de falha, nao ativar seed; revisar variaveis, banco alvo e logs do one-off.
+
+---
+
+## 9. Smoke login
 
 Requisitos:
 
@@ -203,7 +259,7 @@ Validar:
 
 ---
 
-## 9. Evidencias obrigatorias
+## 10. Evidencias obrigatorias
 
 Registrar no fechamento do deploy:
 
@@ -217,13 +273,14 @@ Registrar no fechamento do deploy:
 - Start command `npm start` configurado.
 - Healthcheck path `/health/ready` configurado.
 - Respostas de `/health/live`, `/health/ready` e `/health`.
+- Evidencia do bootstrap controlado quando aplicavel, sem senha exposta.
 - Evidencia de smoke login.
 - Confirmacao de que logs nao vazam secrets.
 - Confirmacao de backup gerenciado ou procedimento manual adotado.
 
 ---
 
-## 10. Falha durante deploy
+## 11. Falha durante deploy
 
 Se migration falhar:
 
@@ -246,7 +303,7 @@ Se login falhar por cookie/CORS:
 
 ---
 
-## 11. Referencias Railway
+## 12. Referencias Railway
 
 - Build/start commands: https://docs.railway.com/reference/build-and-start-commands
 - Pre-deploy command: https://docs.railway.com/guides/pre-deploy-command
@@ -258,7 +315,7 @@ Se login falhar por cookie/CORS:
 
 ---
 
-## 12. Gate de conclusao
+## 13. Gate de conclusao
 
 Deploy so e considerado concluido quando:
 

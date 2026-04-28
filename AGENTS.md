@@ -448,7 +448,7 @@ Com base na análise do estado atual, a sequência sugerida de evolução é:
 | SDD-003 | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | **CONCLUÍDO** | `docs/SDD-003-Inv-Stock.md`, `backend/src/modules/inventory/**`, `backend/src/modules/stock-movements/**` |
 | SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | **CONCLUÍDO** | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/**`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/**` |
 | SDD-005 | Reports + Audit endpoints | **CONCLUÍDO** | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
-| SDD-006 | Deploy + Observabilidade | **DEPLOY/HEALTH REAL VALIDADO PARCIALMENTE** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, Railway `https://almoxarif-production.up.railway.app`, commit `c6575e5`, `/health/live` 200, `/health/ready` 200 com `database=connected` |
+| SDD-006 | Deploy + Observabilidade | **DEPLOY/HEALTH REAL VALIDADO PARCIALMENTE** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, `backend/scripts/bootstrap-admin.ts`, Railway `https://almoxarif-production.up.railway.app`, commit `c6575e5`, `/health/live` 200, `/health/ready` 200 com `database=connected` |
 
 ### Riscos da §6 já mitigados pelo SDD-001+FIX
 
@@ -468,14 +468,15 @@ Com base na análise do estado atual, a sequência sugerida de evolução é:
 Base operacional ja validada:
 - SPEC aprovada: `docs/SDD-006-deploy-observabilidade.md`.
 - DESIGN aprovado: `docs/SDD-006-DESIGN-deploy-observabilidade.md`.
-- Infra implementada: env produtiva, health live/ready, security headers, logging/redact, graceful shutdown, cookies Secure em producao e baseline migration.
+- Infra implementada: env produtiva, health live/ready, security headers, logging/redact, graceful shutdown, cookies Secure em producao, baseline migration e bootstrap controlado de admin.
 - Runbooks criados: `docs/runbooks/SDD-006-deploy.md`, `docs/runbooks/SDD-006-rollback.md`, `docs/runbooks/SDD-006-backup-restore.md`, `docs/runbooks/SDD-006-db-down.md`, `docs/runbooks/SDD-006-secret-rotation.md`.
-- Runner validado: `npm test` no backend com `48/48` arquivos e `232/232` testes; `npm run test:frontend` com `62/62`; build backend passando.
+- Runner validado: `npm test` no backend com `49/49` arquivos e `236/236` testes; `npm run test:frontend` com `62/62`; build backend passando.
 - Migration validada: `prisma migrate deploy` aplicou `00000000000000_baseline` em banco PostgreSQL temporario limpo.
 - Alvo operacional definido: Railway Node service + PostgreSQL gerenciado.
 - Deploy real Railway validado parcialmente em 2026-04-28: commit `c6575e5`, migration sem pendencias, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`.
 - Smoke autenticado/API real tentado em 2026-04-28: login admin e operador padrao retornou 401; banco produtivo sem usuario inicial/controlado.
-- Pendente para fechamento total: bootstrap controlado de usuario inicial, smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
+- Bootstrap controlado de admin definido/testado em `backend/scripts/bootstrap-admin.ts`; falta executar one-off no Railway.
+- Pendente para fechamento total: execucao produtiva do bootstrap controlado de usuario inicial, smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
 
 ---
 

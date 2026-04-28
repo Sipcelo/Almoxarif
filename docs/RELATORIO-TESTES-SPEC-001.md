@@ -1,6 +1,6 @@
 # Relatório de Testes — Almox (baseline acumulado até SDD-006)
 
-**Data de execução:** 2026-04-26
+**Data de execução:** 2026-04-28
 **Documentos referência:**
 - [SDD-001-bootstrap-auth-users.md](./SDD-001-bootstrap-auth-users.md)
 - [SDD-001-FIX-correcao-desvios.md](./SDD-001-FIX-correcao-desvios.md)
@@ -20,17 +20,17 @@
 ## Resultado Geral
 
 ```
-Test Files  48 passed (48)
-     Tests  232 passed (232)
+Test Files  49 passed (49)
+     Tests  236 passed (236)
 ```
 
 | Métrica | Valor |
 |---------|-------|
-| Arquivos de teste | 48 |
-| Arquivos passando | 48 |
+| Arquivos de teste | 49 |
+| Arquivos passando | 49 |
 | Arquivos falhando | 0 |
-| Testes totais | 232 |
-| Testes passando | 232 |
+| Testes totais | 236 |
+| Testes passando | 236 |
 | Testes falhando | 0 |
 | Testes `skip`/`todo` | 0 |
 
@@ -45,6 +45,7 @@ Test Files  48 passed (48)
 > **Atualização 2026-04-26 (SDD-006 Deploy + Observabilidade):** +6 arquivos (`production-env.test.ts`, `health-readiness.test.ts`, `security-headers.test.ts`, `production-cookies.test.ts`, `logging-production.test.ts`, `graceful-shutdown.test.ts`), 19 testes. Total 213 → 232 em 48 arquivos. `npm --prefix backend run build`, `npm run test:frontend` e `prisma migrate deploy` em banco limpo também validados.
 > **Atualização 2026-04-28 (SDD-006 Railway):** deploy real validado parcialmente no Railway. Commit `c6575e5`, `prisma migrate deploy` sem pendências, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `checks.database=connected`.
 > **Atualização 2026-04-28 (SDD-006 smoke autenticado):** smoke autenticado/API real tentado no Railway. `POST /api/v1/auth/login` com admin padrão retornou 401; login com operador padrão retornou 401. Bloqueio operacional: banco produtivo sem usuário inicial/controlado.
+> **Atualização 2026-04-28 (SDD-006 bootstrap admin):** +1 arquivo (`bootstrap-admin.test.ts`), 4 testes. Total 232 → 236 em 49 arquivos. Script `backend/scripts/bootstrap-admin.ts` definido para bootstrap controlado de primeiro admin com confirmação explícita, no-op quando já existe admin ativo e AuditLog `ADMIN_BOOTSTRAPPED`.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -254,7 +255,7 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 
 ## Bloco M — SDD-006 (Deploy + Observabilidade)
 
-> Adicionado em 2026-04-26 após implementação parcial validada do SDD-006. Cobre contratos de ambiente produtivo, health/readiness, security headers, cookies de produção, logging/redact e graceful shutdown.
+> Adicionado em 2026-04-26 após implementação parcial validada do SDD-006. Cobre contratos de ambiente produtivo, health/readiness, security headers, cookies de produção, logging/redact, graceful shutdown e bootstrap controlado de primeiro admin.
 
 | # | Arquivo | Testes | Cobertura |
 |---|---------|--------|-----------|
@@ -264,7 +265,8 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | 46 | `production-cookies.test.ts` | 3 | Cookies `almox_sid` e `almox_csrf` com `Secure` em produção e sem exigência de `Secure` em test |
 | 47 | `logging-production.test.ts` | 2 | Redact de cookie/authorization/senhas e erro de env sem imprimir secrets |
 | 48 | `graceful-shutdown.test.ts` | 2 | Encerramento limpo com desconexão do banco e idempotência do shutdown |
-| **SUBTOTAL SDD-006** | **6 arquivos** | **19** | — |
+| 49 | `bootstrap-admin.test.ts` | 4 | Bootstrap controlado de primeiro admin, senha hasheada, audit log, promoção de usuário existente e no-op quando já existe admin ativo |
+| **SUBTOTAL SDD-006** | **7 arquivos** | **23** | — |
 
 ### Validações complementares SDD-006
 
@@ -275,13 +277,14 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Baseline migration em banco limpo | PASS | `prisma migrate deploy` aplicou `00000000000000_baseline` em PostgreSQL temporário limpo; `_prisma_migrations.finished=true`; 13 tabelas públicas criadas; banco temporário removido |
 | Deploy Railway - migration/start | PASS parcial | Railway executou `prisma migrate deploy` sem pendências e iniciou `node dist/src/app/server.js`; app escutando em `0.0.0.0:8080` |
 | Smoke Railway - health real | PASS | `https://almoxarif-production.up.railway.app/health/live` -> 200; `/health/ready` -> 200 com `checks.database=connected`; `/health` -> 200 |
-| Smoke Railway - autenticado/API | BLOQUEADO | `POST /api/v1/auth/login` com `admin@rodoviariapel.com/admin2026` -> 401; `op@rodoviariapel.com/operador2026` -> 401; exige bootstrap controlado de usuário inicial |
+| Bootstrap admin local | PASS | `backend/scripts/bootstrap-admin.ts`, `backend/test/bootstrap-admin.test.ts`; `npm run bootstrap:admin`/`npm run bootstrap:admin:dist` disponíveis |
+| Smoke Railway - autenticado/API | BLOQUEADO | `POST /api/v1/auth/login` com `admin@rodoviariapel.com/admin2026` -> 401; `op@rodoviariapel.com/operador2026` -> 401; exige execução do bootstrap controlado em produção |
 
 ---
 
 ## Inventário canônico de testes (fonte da verdade)
 
-> **Esta lista é a referência oficial.** Qualquer regressão futura deve passar por toda ela antes de avançar em qualquer SDD. Total: **232 testes em 48 arquivos**.
+> **Esta lista é a referência oficial.** Qualquer regressão futura deve passar por toda ela antes de avançar em qualquer SDD. Total: **236 testes em 49 arquivos**.
 
 | # | Arquivo | Testes | SDD |
 |---|---------|--------|-----|
@@ -333,7 +336,8 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | 46 | `production-cookies.test.ts` | 3 | SDD-006 |
 | 47 | `logging-production.test.ts` | 2 | SDD-006 |
 | 48 | `graceful-shutdown.test.ts` | 2 | SDD-006 |
-| **TOTAL** | **48 arquivos** | **232** | — |
+| 49 | `bootstrap-admin.test.ts` | 4 | SDD-006 |
+| **TOTAL** | **49 arquivos** | **236** | — |
 
 ### Comando canônico de execução
 
@@ -342,11 +346,11 @@ cd backend
 npm test
 ```
 
-**Resultado esperado** (baseline 2026-04-26, pós SDD-006 parcial):
+**Resultado esperado** (baseline 2026-04-28, pós bootstrap admin SDD-006):
 ```
-Test Files  48 passed (48)
-     Tests  232 passed (232)
-  Duration  ~45.57s
+Test Files  49 passed (49)
+     Tests  236 passed (236)
+  Duration  ~46.41s
 ```
 
 Validações complementares:
@@ -366,7 +370,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 ### Critério de regressão
 
 - ✅ Toda nova SDD **soma** testes a este inventário, nunca remove.
-- ✅ Nenhum SDD pode ser fechado enquanto **qualquer** dos 232 testes atuais falhar.
+- ✅ Nenhum SDD pode ser fechado enquanto **qualquer** dos 236 testes atuais falhar.
 - ✅ Qualquer mudança de contrato que quebre um teste exige **micro-SPEC aprovada** antes (como fizemos com paginação).
 - ❌ Teste `skip` ou `todo` é proibido — se algo não pode ser testado agora, registrar como débito explícito em "Riscos Residuais" ou "Débitos Técnicos".
 
@@ -480,7 +484,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 
 | CA | Descrição | Evidência | Status |
 |----|-----------|-----------|--------|
-| CA-T1 | `npm test` em `backend/` passa | 48 arquivos / 232 testes PASS | PASS |
+| CA-T1 | `npm test` em `backend/` passa | 49 arquivos / 236 testes PASS | PASS |
 | CA-T2 | `npm run build` em `backend/` passa | `tsc` sem erro | PASS |
 | CA-T3 | `PROGRESS.md` e runbooks refletem estado real | `docs/PROGRESS.md`, `docs/runbooks/*` | PASS |
 
@@ -496,9 +500,9 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R4 | Cenários de boot dependem de env isolado | BAIXO | Rodar com `DATABASE_URL` de teste e validar `validateEnv/buildApp` |
 | R5 | Rate-limit por IP; em localhost todos os testes compartilham IP | BAIXO | Mitigado via `LOGIN_RATE_LIMIT_MAX` alto em `.env.test` |
 | R6 | Sem job de limpeza de sessões expiradas | BAIXO | Registrado em SDD-001 §7 R1; pendência para módulo posterior |
-| R7 | Smoke autenticado/API real bloqueado por ausência de usuário inicial | MÉDIO | Health real passou; login admin/op padrão retornou 401; falta bootstrap controlado e reexecução |
+| R7 | Smoke autenticado/API real bloqueado por ausência de usuário inicial | MÉDIO | Health real passou; login admin/op padrão retornou 401; script de bootstrap existe, falta executar no Railway e reexecutar smoke |
 | R8 | CA-D3 não teve falha proposital simulada em produção | BAIXO | Pre-deploy real de sucesso validado; falha de migration fica coberta por runbook e comportamento do Railway |
-| R9 | Banco produtivo está sem usuário inicial validado pelo smoke | MÉDIO | `SEED_ENABLED=false` é obrigatório em produção; exige política controlada de bootstrap de usuário antes do smoke login |
+| R9 | Banco produtivo está sem usuário inicial validado pelo smoke | MÉDIO | `SEED_ENABLED=false` é obrigatório em produção; bootstrap controlado implementado, execução produtiva ainda pendente |
 | R10 | Backup gerenciado/manual ainda não confirmado no Railway | ALTO | Confirmar plano/recurso de backup ou executar runbook manual antes de considerar SDD-006 concluído |
 
 ---
@@ -522,15 +526,15 @@ Regras vigentes:
 
 ## Conclusão
 
-O baseline acumulado até a implementação parcial do SDD-006 está validado com **48 arquivos backend / 232 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
+O baseline acumulado até a implementação parcial do SDD-006 está validado com **49 arquivos backend / 236 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
 
-O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact e graceful shutdown. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo e no Railway.
+O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact, graceful shutdown e bootstrap controlado de primeiro admin. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo e no Railway.
 
 **Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendências para fechamento total do SDD-006:** bootstrap controlado de usuário inicial, reexecução do smoke autenticado/API real, validação de logs reais sem secrets, confirmação de backup e registro final de riscos residuais.
+**Pendências para fechamento total do SDD-006:** execução do bootstrap controlado de usuário inicial no Railway, reexecução do smoke autenticado/API real, validação de logs reais sem secrets, confirmação de backup e registro final de riscos residuais.
 
-**Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 232 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
+**Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 236 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 
 
 
