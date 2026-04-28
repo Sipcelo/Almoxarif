@@ -3,7 +3,7 @@
 > Projeto: Almox
 > Modulo: SDD-006 - Deploy + Observabilidade
 > Data: 2026-04-28
-> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; fechamento operacional ainda pendente de smoke autenticado, logs e backup
+> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; smoke autenticado bloqueado por ausencia de usuario inicial
 
 ---
 
@@ -32,7 +32,7 @@
 | Smoke/deploy real | PASS parcial | Railway em `https://almoxarif-production.up.railway.app`; commit `c6575e5`; `/health/live`, `/health/ready` e `/health` retornando 200 |
 | Alvo operacional | DEFINIDO | Railway Node service + PostgreSQL gerenciado |
 
-Conclusao: o DoD tecnico/documental do recorte implementado esta atendido e o smoke real de health no Railway passou. O SDD-006 ainda nao deve ser marcado como concluido porque faltam smoke autenticado/API, validacao de logs reais, confirmacao de backup e registro final de riscos residuais.
+Conclusao: o DoD tecnico/documental do recorte implementado esta atendido e o smoke real de health no Railway passou. O smoke autenticado/API foi tentado e bloqueou em login 401 para os usuarios padrao. O SDD-006 ainda nao deve ser marcado como concluido porque faltam bootstrap controlado de usuario inicial, smoke autenticado/API, validacao de logs reais, confirmacao de backup e registro final de riscos residuais.
 
 ---
 
@@ -89,7 +89,7 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | Item | Status | Motivo |
 |------|--------|--------|
-| Smoke login em deploy real | PENDENTE | Exige usuario controlado no banco produtivo; `SEED_ENABLED=false` impede seed automatico em producao |
+| Smoke login em deploy real | BLOQUEADO | `POST /api/v1/auth/login` com admin padrao -> 401; operador padrao -> 401; exige bootstrap controlado de usuario inicial |
 | Validar `/health/live` e `/health/ready` no Railway | PASS | 2026-04-28: `/health/live` 200; `/health/ready` 200 com `checks.database=connected`; `/health` 200 |
 | Validar logs reais do Railway sem secrets | PENDENTE | Exige runtime real |
 | Confirmar backup gerenciado ou politica manual no Railway | PENDENTE | Exige projeto/plano final |
@@ -101,12 +101,12 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | # | Risco | Severidade | Mitigacao |
 |---|-------|------------|-----------|
-| R1 | Smoke autenticado/API real ainda nao executado | Medio | Criar/confirmar usuario controlado e testar login/me/endpoints principais |
+| R1 | Smoke autenticado/API real bloqueado por ausencia de usuario inicial | Medio | Criar/confirmar usuario controlado e testar login/me/endpoints principais |
 | R2 | Railway usa porta dinamica e target port pode divergir | Baixo | Evidencia atual: app ouvindo em `0.0.0.0:8080`; dominio ajustado para target port correspondente |
 | R3 | Cookies/CORS podem falhar em dominio real | Medio | Smoke login com HTTPS e `CORS_ORIGIN` exato |
 | R4 | Backup gerenciado pode nao existir no plano escolhido | Alto | Confirmar antes de migration produtiva; usar runbook de backup manual se necessario |
 | R5 | Logs reais podem conter metadados do provedor fora do controle da app | Baixo | Revisar logs apos smoke e ajustar configuracao se necessario |
-| R6 | Banco produtivo pode nao ter usuario inicial | Medio | `SEED_ENABLED=false` e necessario em producao; definir bootstrap controlado de admin |
+| R6 | Banco produtivo nao tem usuario inicial validado pelo smoke | Medio | `SEED_ENABLED=false` e necessario em producao; definir bootstrap controlado de admin |
 
 ---
 
@@ -120,8 +120,9 @@ Status atual:
 
 Proximo passo autorizado:
 
-1. Executar smoke autenticado/API real no Railway.
-2. Validar logs reais sem secrets.
-3. Confirmar backup gerenciado ou aplicar runbook manual.
-4. Atualizar riscos residuais finais.
-5. So entao marcar SDD-006 como concluido.
+1. Definir e executar bootstrap controlado de usuario inicial/admin.
+2. Reexecutar smoke autenticado/API real no Railway.
+3. Validar logs reais sem secrets.
+4. Confirmar backup gerenciado ou aplicar runbook manual.
+5. Atualizar riscos residuais finais.
+6. So entao marcar SDD-006 como concluido.

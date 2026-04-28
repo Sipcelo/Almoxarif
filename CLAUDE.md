@@ -474,7 +474,8 @@ Base operacional ja validada:
 - Migration validada: `prisma migrate deploy` aplicou `00000000000000_baseline` em banco PostgreSQL temporario limpo.
 - Alvo operacional definido: Railway Node service + PostgreSQL gerenciado.
 - Deploy real Railway validado parcialmente em 2026-04-28: commit `c6575e5`, migration sem pendencias, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`.
-- Pendente para fechamento total: smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
+- Smoke autenticado/API real tentado em 2026-04-28: login admin e operador padrao retornou 401; banco produtivo sem usuario inicial/controlado.
+- Pendente para fechamento total: bootstrap controlado de usuario inicial, smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
 
 ---
 

@@ -183,10 +183,12 @@ Ativado via `SEED_ENABLED=true`.
 | Alvo operacional do deploy | ✅ definido | Railway Node service + PostgreSQL gerenciado |
 | Deploy real Railway | ✅ health validado | Commit `c6575e5`; migration sem pendência; app ouvindo em `0.0.0.0:8080`; domínio `https://almoxarif-production.up.railway.app` |
 | Smoke real de health | ✅ validado | `GET /health/live` -> 200; `GET /health/ready` -> 200 com `checks.database=connected`; `GET /health` -> 200 |
+| Smoke autenticado/API real | ⚠️ bloqueado | `POST /api/v1/auth/login` com `admin@rodoviariapel.com/admin2026` -> 401; `op@rodoviariapel.com/operador2026` -> 401; banco produtivo sem usuário inicial confirmado por comportamento |
 
 Pendências para fechamento do SDD-006:
 
-- Executar smoke autenticado/API real quando houver usuário controlado no banco produtivo.
+- Definir e executar bootstrap controlado de usuário inicial/admin no banco produtivo.
+- Reexecutar smoke autenticado/API real após bootstrap.
 - Validar logs reais do Railway sem exposição de secrets.
 - Confirmar política de backup gerenciado/manual no Railway.
 - Registrar riscos residuais finais antes de marcar o SDD como concluído.
@@ -294,7 +296,8 @@ Comando executado para validação do fechamento:
 ### 7.1 Imediato — SDD-006 (Deploy + Observabilidade)
 
 Escopo imediato:
-- executar smoke autenticado/API real no Railway quando houver usuário controlado
+- definir bootstrap controlado de usuário inicial/admin para produção
+- reexecutar smoke autenticado/API real no Railway após bootstrap
 - validar logs reais do Railway sem secrets
 - confirmar backup gerenciado ou runbook manual aplicável ao plano atual
 
@@ -338,6 +341,7 @@ Escopo imediato:
 | 2026-04-26 | DoD do SDD-006 revisado contra SPEC/DESIGN em `docs/SDD-006-DOD-review.md`; DoD técnico/documental local PASS, fechamento operacional pendente de smoke/deploy real. |
 | 2026-04-26 | Alvo operacional definido como Railway; DESIGN, SPEC, runbook de deploy, PROGRESS e DoD atualizados para Railway Node service + PostgreSQL gerenciado. |
 | 2026-04-28 | Deploy real no Railway validado parcialmente: commit `c6575e5`, `prisma migrate deploy` sem pendências, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`. |
+| 2026-04-28 | Smoke autenticado/API real tentado no Railway; login com admin e operador padrão retornou 401. Evidência indica banco produtivo sem usuário inicial porque `SEED_ENABLED=false` é obrigatório em produção. Fechamento segue bloqueado até bootstrap controlado. |
 
 ---
 
