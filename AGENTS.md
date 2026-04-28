@@ -448,7 +448,7 @@ Com base na análise do estado atual, a sequência sugerida de evolução é:
 | SDD-003 | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | **CONCLUÍDO** | `docs/SDD-003-Inv-Stock.md`, `backend/src/modules/inventory/**`, `backend/src/modules/stock-movements/**` |
 | SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | **CONCLUÍDO** | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/**`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/**` |
 | SDD-005 | Reports + Audit endpoints | **CONCLUÍDO** | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
-| SDD-006 | Deploy + Observabilidade | **EM IMPLEMENTACAO PARCIAL VALIDADA** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, `backend/src/infra/**`, `backend/test/production-env.test.ts`, `backend/test/health-readiness.test.ts`, `backend/test/security-headers.test.ts`, `backend/test/production-cookies.test.ts`, `backend/test/logging-production.test.ts`, `backend/test/graceful-shutdown.test.ts` |
+| SDD-006 | Deploy + Observabilidade | **DEPLOY/HEALTH REAL VALIDADO PARCIALMENTE** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, Railway `https://almoxarif-production.up.railway.app`, commit `c6575e5`, `/health/live` 200, `/health/ready` 200 com `database=connected` |
 
 ### Riscos da §6 já mitigados pelo SDD-001+FIX
 
@@ -473,7 +473,8 @@ Base operacional ja validada:
 - Runner validado: `npm test` no backend com `48/48` arquivos e `232/232` testes; `npm run test:frontend` com `62/62`; build backend passando.
 - Migration validada: `prisma migrate deploy` aplicou `00000000000000_baseline` em banco PostgreSQL temporario limpo.
 - Alvo operacional definido: Railway Node service + PostgreSQL gerenciado.
-- Pendente para fechamento total: smoke/deploy real no Railway e registro final de riscos residuais.
+- Deploy real Railway validado parcialmente em 2026-04-28: commit `c6575e5`, migration sem pendencias, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`.
+- Pendente para fechamento total: smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
 
 ---
 

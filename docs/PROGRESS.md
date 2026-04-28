@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-26 (SDD-006 implementação parcial validada)
+> **Última atualização:** 2026-04-28 (SDD-006 deploy Railway com health real validado)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -11,7 +11,7 @@
 | Métrica | Valor |
 |---------|-------|
 | SDDs concluídos | **5 de 6** (SDD-001 + SDD-002 + SDD-003 + SDD-004 + SDD-005; SDD-001-FIX concluido como adendo) |
-| SDDs pendentes | 1 (SDD-006 em implementação parcial; deploy final/smoke real pendente) |
+| SDDs pendentes | 1 (SDD-006 com deploy/health real validado; smoke autenticado, logs e backup pendentes) |
 | Testes totais | **294/294 passando** (232 backend + 62 frontend apiClient) |
 | Arquivos de teste | 49 (48 backend + 1 frontend) |
 | Testes `skip`/`todo` | 0 |
@@ -32,7 +32,7 @@
 | **SDD-003** | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | ✅ **CONCLUÍDO** | 160 (cumulativo, +27) | `docs/SDD-003-Inv-Stock.md`, `docs/SDD-003-DESIGN-Inv-Stock.md`, Bloco H |
 | **SDD-004** | Integracao Frontend ↔ Backend (substituir localStorage por fetch API) | ✅ **CONCLUIDO** (PR-1 ao PR-9 + Addendum A Acessos) | 180 backend + 62 frontend | `apiClient.js`, `front/js/auth.js`, `front/js/pages/dashboard.js`, `front/js/pages/pages.js`, `front/js/modals.js`, `front/js/utils.js`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/08-usuarios.spec.ts`, `e2e/tests/09-relatorios.spec.ts` |
 | **SDD-005** | Reports + Audit endpoints | ✅ **CONCLUÍDO** | 213 backend (cumulativo, +33) | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
-| **SDD-006** | Deploy + Observabilidade | **EM IMPLEMENTAÇÃO PARCIAL VALIDADA** | 232 backend (cumulativo, +19) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/logger-options.ts`, `backend/src/infra/shutdown.ts`, `backend/prisma/migrations/00000000000000_baseline/migration.sql`, `backend/test/production-env.test.ts`, `backend/test/health-readiness.test.ts`, `backend/test/security-headers.test.ts`, `backend/test/production-cookies.test.ts`, `backend/test/logging-production.test.ts`, `backend/test/graceful-shutdown.test.ts` |
+| **SDD-006** | Deploy + Observabilidade | **DEPLOY/HEALTH REAL VALIDADO PARCIALMENTE** | 232 backend (cumulativo, +19) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/logger-options.ts`, `backend/src/infra/shutdown.ts`, `backend/prisma/migrations/00000000000000_baseline/migration.sql`, Railway `https://almoxarif-production.up.railway.app`, commit `c6575e5`, `/health/live` 200, `/health/ready` 200 com `database=connected` |
 
 ---
 
@@ -181,11 +181,15 @@ Ativado via `SEED_ENABLED=true`.
 | Runbooks operacionais | ✅ criados | `docs/runbooks/SDD-006-deploy.md`, `docs/runbooks/SDD-006-rollback.md`, `docs/runbooks/SDD-006-backup-restore.md`, `docs/runbooks/SDD-006-db-down.md`, `docs/runbooks/SDD-006-secret-rotation.md` |
 | Revisão DoD contra SPEC/DESIGN | ✅ realizada | `docs/SDD-006-DOD-review.md` |
 | Alvo operacional do deploy | ✅ definido | Railway Node service + PostgreSQL gerenciado |
+| Deploy real Railway | ✅ health validado | Commit `c6575e5`; migration sem pendência; app ouvindo em `0.0.0.0:8080`; domínio `https://almoxarif-production.up.railway.app` |
+| Smoke real de health | ✅ validado | `GET /health/live` -> 200; `GET /health/ready` -> 200 com `checks.database=connected`; `GET /health` -> 200 |
 
 Pendências para fechamento do SDD-006:
 
-- Executar smoke test de deploy real quando o alvo operacional estiver disponível.
-- Registrar riscos residuais e evidências finais antes de marcar o SDD como concluído.
+- Executar smoke autenticado/API real quando houver usuário controlado no banco produtivo.
+- Validar logs reais do Railway sem exposição de secrets.
+- Confirmar política de backup gerenciado/manual no Railway.
+- Registrar riscos residuais finais antes de marcar o SDD como concluído.
 
 ---
 
@@ -290,11 +294,13 @@ Comando executado para validação do fechamento:
 ### 7.1 Imediato — SDD-006 (Deploy + Observabilidade)
 
 Escopo imediato:
-- executar smoke test de deploy real quando o alvo operacional estiver disponível
+- executar smoke autenticado/API real no Railway quando houver usuário controlado
+- validar logs reais do Railway sem secrets
+- confirmar backup gerenciado ou runbook manual aplicável ao plano atual
 
 ### 7.2 Médio prazo
 
-- Fechamento operacional do **SDD-006** no alvo aprovado: Railway Node service + PostgreSQL gerenciado.
+- Fechamento operacional do **SDD-006** no alvo aprovado após smoke autenticado, logs e backup.
 
 ---
 
@@ -331,6 +337,7 @@ Escopo imediato:
 | 2026-04-26 | `RELATORIO-TESTES-SPEC-001.md` atualizado com Bloco M do SDD-006, inventário canônico 48/232 backend, validações complementares e riscos residuais. |
 | 2026-04-26 | DoD do SDD-006 revisado contra SPEC/DESIGN em `docs/SDD-006-DOD-review.md`; DoD técnico/documental local PASS, fechamento operacional pendente de smoke/deploy real. |
 | 2026-04-26 | Alvo operacional definido como Railway; DESIGN, SPEC, runbook de deploy, PROGRESS e DoD atualizados para Railway Node service + PostgreSQL gerenciado. |
+| 2026-04-28 | Deploy real no Railway validado parcialmente: commit `c6575e5`, `prisma migrate deploy` sem pendências, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`. |
 
 ---
 

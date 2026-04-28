@@ -2,8 +2,8 @@
 
 > Projeto: Almox
 > Modulo: SDD-006 - Deploy + Observabilidade
-> Data: 2026-04-26
-> Status: DoD tecnico/documental validado; fechamento operacional ainda pendente de smoke/deploy real
+> Data: 2026-04-28
+> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; fechamento operacional ainda pendente de smoke autenticado, logs e backup
 
 ---
 
@@ -29,10 +29,10 @@
 | Migration em banco limpo | PASS | `prisma migrate deploy` aplicou `00000000000000_baseline` em PostgreSQL temporario limpo |
 | Runbooks | PASS | 5 runbooks criados em `docs/runbooks/` |
 | Documentacao de progresso/testes/contexto | PASS | `PROGRESS.md`, `RELATORIO-TESTES-SPEC-001.md`, `AGENTS.md`, `CLAUDE.md`, `WORKTREE-TRANSPLANTE.md` atualizados |
-| Smoke/deploy real | PENDENTE | Depende de ambiente operacional alvo |
+| Smoke/deploy real | PASS parcial | Railway em `https://almoxarif-production.up.railway.app`; commit `c6575e5`; `/health/live`, `/health/ready` e `/health` retornando 200 |
 | Alvo operacional | DEFINIDO | Railway Node service + PostgreSQL gerenciado |
 
-Conclusao: o DoD tecnico/documental do recorte implementado esta atendido. O SDD-006 ainda nao deve ser marcado como concluido porque falta o smoke/deploy real e o registro final de riscos residuais apos esse smoke.
+Conclusao: o DoD tecnico/documental do recorte implementado esta atendido e o smoke real de health no Railway passou. O SDD-006 ainda nao deve ser marcado como concluido porque faltam smoke autenticado/API, validacao de logs reais, confirmacao de backup e registro final de riscos residuais.
 
 ---
 
@@ -89,11 +89,11 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | Item | Status | Motivo |
 |------|--------|--------|
-| Smoke login em deploy real | PENDENTE | Exige ambiente operacional com HTTPS, dominio/origem e usuario controlado |
-| Validar `/health/live` e `/health/ready` no Railway | PENDENTE | Exige deploy real |
+| Smoke login em deploy real | PENDENTE | Exige usuario controlado no banco produtivo; `SEED_ENABLED=false` impede seed automatico em producao |
+| Validar `/health/live` e `/health/ready` no Railway | PASS | 2026-04-28: `/health/live` 200; `/health/ready` 200 com `checks.database=connected`; `/health` 200 |
 | Validar logs reais do Railway sem secrets | PENDENTE | Exige runtime real |
 | Confirmar backup gerenciado ou politica manual no Railway | PENDENTE | Exige projeto/plano final |
-| CA-D3: migration falha nao promove versao ready | PARCIAL | Railway pre-deploy command cobre a regra; validacao pratica depende do deploy real |
+| CA-D3: migration falha nao promove versao ready | PARCIAL | Railway pre-deploy executou `prisma migrate deploy` antes do start; falha proposital de migration nao foi simulada |
 
 ---
 
@@ -101,11 +101,12 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | # | Risco | Severidade | Mitigacao |
 |---|-------|------------|-----------|
-| R1 | Smoke/deploy real ainda nao executado | Medio | Executar runbook de deploy Railway antes de fechar SDD-006 |
-| R2 | Railway pode ter comportamento proprio de migrations/start command | Medio | Usar pre-deploy command para `prisma migrate deploy`, start command separado e registrar evidencia |
+| R1 | Smoke autenticado/API real ainda nao executado | Medio | Criar/confirmar usuario controlado e testar login/me/endpoints principais |
+| R2 | Railway usa porta dinamica e target port pode divergir | Baixo | Evidencia atual: app ouvindo em `0.0.0.0:8080`; dominio ajustado para target port correspondente |
 | R3 | Cookies/CORS podem falhar em dominio real | Medio | Smoke login com HTTPS e `CORS_ORIGIN` exato |
 | R4 | Backup gerenciado pode nao existir no plano escolhido | Alto | Confirmar antes de migration produtiva; usar runbook de backup manual se necessario |
 | R5 | Logs reais podem conter metadados do provedor fora do controle da app | Baixo | Revisar logs apos smoke e ajustar configuracao se necessario |
+| R6 | Banco produtivo pode nao ter usuario inicial | Medio | `SEED_ENABLED=false` e necessario em producao; definir bootstrap controlado de admin |
 
 ---
 
@@ -114,11 +115,13 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 Status atual:
 
 - DoD tecnico/documental local: PASS.
+- Deploy/health real no Railway: PASS parcial.
 - Fechamento operacional total do SDD-006: PENDENTE.
 
 Proximo passo autorizado:
 
-1. Executar smoke/deploy real no Railway usando `docs/runbooks/SDD-006-deploy.md`.
-2. Registrar evidencias de health, login, logs e backup.
-3. Atualizar riscos residuais finais.
-4. So entao marcar SDD-006 como concluido.
+1. Executar smoke autenticado/API real no Railway.
+2. Validar logs reais sem secrets.
+3. Confirmar backup gerenciado ou aplicar runbook manual.
+4. Atualizar riscos residuais finais.
+5. So entao marcar SDD-006 como concluido.

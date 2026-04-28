@@ -43,6 +43,7 @@ Test Files  48 passed (48)
 > **Atualização 2026-04-20 (SDD-004 PR-9 - Import legacy):** +1 arquivo (`import-legacy.test.ts`, 5 testes). Total 175 → 180 em 40 arquivos.
 > **Atualização 2026-04-24 (SDD-005 Reports + Audit):** +2 arquivos (`reports.test.ts`, `audit-query.test.ts`), 33 testes. Total 180 → 213 em 42 arquivos.
 > **Atualização 2026-04-26 (SDD-006 Deploy + Observabilidade):** +6 arquivos (`production-env.test.ts`, `health-readiness.test.ts`, `security-headers.test.ts`, `production-cookies.test.ts`, `logging-production.test.ts`, `graceful-shutdown.test.ts`), 19 testes. Total 213 → 232 em 48 arquivos. `npm --prefix backend run build`, `npm run test:frontend` e `prisma migrate deploy` em banco limpo também validados.
+> **Atualização 2026-04-28 (SDD-006 Railway):** deploy real validado parcialmente no Railway. Commit `c6575e5`, `prisma migrate deploy` sem pendências, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `checks.database=connected`.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -271,6 +272,8 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Build backend | PASS | `cmd /c "npm --prefix backend run build"` |
 | Frontend apiClient | PASS, 62 testes | `npm run test:frontend` |
 | Baseline migration em banco limpo | PASS | `prisma migrate deploy` aplicou `00000000000000_baseline` em PostgreSQL temporário limpo; `_prisma_migrations.finished=true`; 13 tabelas públicas criadas; banco temporário removido |
+| Deploy Railway - migration/start | PASS parcial | Railway executou `prisma migrate deploy` sem pendências e iniciou `node dist/src/app/server.js`; app escutando em `0.0.0.0:8080` |
+| Smoke Railway - health real | PASS | `https://almoxarif-production.up.railway.app/health/live` -> 200; `/health/ready` -> 200 com `checks.database=connected`; `/health` -> 200 |
 
 ---
 
@@ -467,7 +470,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 |----|-----------|-----------|--------|
 | CA-D1 | Baseline migration existe | `backend/prisma/migrations/00000000000000_baseline/migration.sql` | PASS |
 | CA-D2 | Schema aplica com `prisma migrate deploy`, não `db push` | Validação em PostgreSQL temporário limpo em 2026-04-26 | PASS |
-| CA-D3 | Falha de migration não deve considerar versão ready | Coberto por runbook `docs/runbooks/SDD-006-deploy.md` e validação manual; sem deploy real ainda | PARCIAL |
+| CA-D3 | Falha de migration não deve considerar versão ready | Railway pre-deploy executou `prisma migrate deploy` antes do start; deploy real de sucesso validado. Falha proposital de migration não foi simulada em produção | PARCIAL |
 | CA-D4 | Rollback documentado | `docs/runbooks/SDD-006-rollback.md` | PASS |
 | CA-D5 | Backup/restore documentado antes de migration relevante | `docs/runbooks/SDD-006-backup-restore.md` | PASS |
 
@@ -491,8 +494,10 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R4 | Cenários de boot dependem de env isolado | BAIXO | Rodar com `DATABASE_URL` de teste e validar `validateEnv/buildApp` |
 | R5 | Rate-limit por IP; em localhost todos os testes compartilham IP | BAIXO | Mitigado via `LOGIN_RATE_LIMIT_MAX` alto em `.env.test` |
 | R6 | Sem job de limpeza de sessões expiradas | BAIXO | Registrado em SDD-001 §7 R1; pendência para módulo posterior |
-| R7 | Smoke test de deploy real ainda não executado | MÉDIO | Depende de ambiente alvo disponível; SDD-006 não deve ser marcado como concluído antes dessa evidência |
-| R8 | CA-D3 ainda depende de validação em deploy real | BAIXO | Runbook cobre o comportamento; validação prática fica para implantação no provedor |
+| R7 | Smoke autenticado/API real ainda não executado | MÉDIO | Health real passou; falta validar login/me/endpoints autenticados com usuário controlado |
+| R8 | CA-D3 não teve falha proposital simulada em produção | BAIXO | Pre-deploy real de sucesso validado; falha de migration fica coberta por runbook e comportamento do Railway |
+| R9 | Banco produtivo pode estar sem usuário inicial | MÉDIO | `SEED_ENABLED=false` é obrigatório em produção; exige política controlada de bootstrap de usuário antes do smoke login |
+| R10 | Backup gerenciado/manual ainda não confirmado no Railway | ALTO | Confirmar plano/recurso de backup ou executar runbook manual antes de considerar SDD-006 concluído |
 
 ---
 
@@ -517,11 +522,11 @@ Regras vigentes:
 
 O baseline acumulado até a implementação parcial do SDD-006 está validado com **48 arquivos backend / 232 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
 
-O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact e graceful shutdown. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo.
+O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact e graceful shutdown. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo e no Railway.
 
-**Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido.**
+**Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendências para fechamento total do SDD-006:** smoke test de deploy real, validação operacional no alvo escolhido e registro final de riscos residuais.
+**Pendências para fechamento total do SDD-006:** smoke autenticado/API real, validação de logs reais sem secrets, confirmação de backup e registro final de riscos residuais.
 
 **Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 232 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 
