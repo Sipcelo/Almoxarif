@@ -47,6 +47,7 @@ Test Files  49 passed (49)
 > **Atualização 2026-04-28 (SDD-006 smoke autenticado):** smoke autenticado/API real tentado no Railway. `POST /api/v1/auth/login` com admin padrão retornou 401; login com operador padrão retornou 401. Bloqueio operacional: banco produtivo sem usuário inicial/controlado.
 > **Atualização 2026-04-28 (SDD-006 bootstrap admin):** +1 arquivo (`bootstrap-admin.test.ts`), 4 testes. Total 232 → 236 em 49 arquivos. Script `backend/scripts/bootstrap-admin.ts` definido para bootstrap controlado de primeiro admin com confirmação explícita, no-op quando já existe admin ativo e AuditLog `ADMIN_BOOTSTRAPPED`.
 > **Atualização 2026-04-29 (SDD-006 bootstrap produção):** bootstrap controlado executado contra PostgreSQL de produção via Railway CLI e `DATABASE_PUBLIC_URL`; resultado `action=created` para `admin@rodoviariapel.com`. Variáveis temporárias `BOOTSTRAP_*` removidas após execução.
+> **Atualização 2026-04-29 (SDD-006 smoke autenticado/API):** smoke autenticado passou na API real do Railway com `admin@rodoviariapel.com`: login 200, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida. Raiz do domínio segue backend-only e retorna `NOT_FOUND`, sem frontend estático publicado.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -280,7 +281,8 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Smoke Railway - health real | PASS | `https://almoxarif-production.up.railway.app/health/live` -> 200; `/health/ready` -> 200 com `checks.database=connected`; `/health` -> 200 |
 | Bootstrap admin local | PASS | `backend/scripts/bootstrap-admin.ts`, `backend/test/bootstrap-admin.test.ts`; `npm run bootstrap:admin`/`npm run bootstrap:admin:dist` disponíveis |
 | Bootstrap admin produção | PASS | Railway CLI executou `npm --prefix backend run bootstrap:admin` contra `DATABASE_PUBLIC_URL`; resultado `action=created`, email `admin@rodoviariapel.com`; variáveis `BOOTSTRAP_*` removidas |
-| Smoke Railway - autenticado/API | PENDENTE | Admin inicial criado; falta login com senha temporária controlada, validação de `/api/v1/auth/me` e endpoints principais |
+| Smoke Railway - autenticado/API | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
+| Smoke Railway - frontend estatico | PENDENTE | Raiz `https://almoxarif-production.up.railway.app/` retorna `NOT_FOUND`; serviço atual expõe apenas backend/API |
 
 ---
 
@@ -502,9 +504,9 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R4 | Cenários de boot dependem de env isolado | BAIXO | Rodar com `DATABASE_URL` de teste e validar `validateEnv/buildApp` |
 | R5 | Rate-limit por IP; em localhost todos os testes compartilham IP | BAIXO | Mitigado via `LOGIN_RATE_LIMIT_MAX` alto em `.env.test` |
 | R6 | Sem job de limpeza de sessões expiradas | BAIXO | Registrado em SDD-001 §7 R1; pendência para módulo posterior |
-| R7 | Smoke autenticado/API real ainda pendente após bootstrap | MÉDIO | Admin inicial foi criado; falta login com senha temporária controlada, `/auth/me` e endpoints principais |
+| R7 | Frontend estatico ainda nao publicado no dominio Railway | MÉDIO | API real passou; raiz do domínio retorna `NOT_FOUND` porque o serviço atual expõe apenas backend/API |
 | R8 | CA-D3 não teve falha proposital simulada em produção | BAIXO | Pre-deploy real de sucesso validado; falha de migration fica coberta por runbook e comportamento do Railway |
-| R9 | Usuário inicial produtivo criado, mas ainda sem smoke autenticado | MÉDIO | Bootstrap controlado executado em 2026-04-29; falta validar login real e remover/rotacionar a senha temporária pelo fluxo operacional definido |
+| R9 | Senha temporária do admin precisa de política operacional após smoke | MÉDIO | Login real passou; manter ou rotacionar a senha temporária depende da política operacional de credenciais iniciais |
 | R10 | Backup gerenciado/manual ainda não confirmado no Railway | ALTO | Confirmar plano/recurso de backup ou executar runbook manual antes de considerar SDD-006 concluído |
 
 ---
@@ -534,7 +536,7 @@ O SDD-006 adicionou cobertura para env produtiva, health live/ready, security he
 
 **Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendências para fechamento total do SDD-006:** reexecução do smoke autenticado/API real, validação de logs reais sem secrets, confirmação de backup e registro final de riscos residuais.
+**Pendências para fechamento total do SDD-006:** definição/publicação do frontend estático ou decisão formal de API-only neste recorte, validação de logs reais sem secrets, confirmação de backup e registro final de riscos residuais.
 
 **Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 236 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 

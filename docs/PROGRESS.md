@@ -11,7 +11,7 @@
 | Métrica | Valor |
 |---------|-------|
 | SDDs concluídos | **5 de 6** (SDD-001 + SDD-002 + SDD-003 + SDD-004 + SDD-005; SDD-001-FIX concluido como adendo) |
-| SDDs pendentes | 1 (SDD-006 com deploy/health/bootstrap admin validados; smoke autenticado, logs e backup pendentes) |
+| SDDs pendentes | 1 (SDD-006 com deploy/health/bootstrap/smoke API validados; frontend estatico, logs e backup pendentes) |
 | Testes totais | **298/298 passando** (236 backend + 62 frontend apiClient) |
 | Arquivos de teste | 50 (49 backend + 1 frontend) |
 | Testes `skip`/`todo` | 0 |
@@ -184,11 +184,12 @@ Ativado via `SEED_ENABLED=true`.
 | Alvo operacional do deploy | ✅ definido | Railway Node service + PostgreSQL gerenciado |
 | Deploy real Railway | ✅ health validado | Commit `c6575e5`; migration sem pendência; app ouvindo em `0.0.0.0:8080`; domínio `https://almoxarif-production.up.railway.app` |
 | Smoke real de health | ✅ validado | `GET /health/live` -> 200; `GET /health/ready` -> 200 com `checks.database=connected`; `GET /health` -> 200 |
-| Smoke autenticado/API real | ⏳ pendente | Admin inicial criado em produção; falta executar login com a senha temporária controlada e validar `/auth/me` + endpoints principais |
+| Smoke autenticado/API real | ✅ validado | Login com `admin@rodoviariapel.com`, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` passaram na API real do Railway |
+| Frontend estatico no dominio | ⏳ pendente | `https://almoxarif-production.up.railway.app/` expõe apenas o backend e retorna `NOT_FOUND`; falta definir/publicar o frontend estatico do MVP |
 
 Pendências para fechamento do SDD-006:
 
-- Reexecutar smoke autenticado/API real com o admin controlado.
+- Definir/publicar frontend estatico do MVP ou registrar decisao formal de API-only neste recorte.
 - Validar logs reais do Railway sem exposição de secrets.
 - Confirmar política de backup gerenciado/manual no Railway.
 - Registrar riscos residuais finais antes de marcar o SDD como concluído.
@@ -296,7 +297,7 @@ Comando executado para validação do fechamento:
 ### 7.1 Imediato — SDD-006 (Deploy + Observabilidade)
 
 Escopo imediato:
-- reexecutar smoke autenticado/API real no Railway com o admin controlado
+- definir/publicar frontend estatico do MVP ou registrar decisao formal de API-only neste recorte
 - validar logs reais do Railway sem secrets
 - confirmar backup gerenciado ou runbook manual aplicável ao plano atual
 
@@ -343,6 +344,7 @@ Escopo imediato:
 | 2026-04-28 | Smoke autenticado/API real tentado no Railway; login com admin e operador padrão retornou 401. Evidência indica banco produtivo sem usuário inicial porque `SEED_ENABLED=false` é obrigatório em produção. Fechamento segue bloqueado até bootstrap controlado. |
 | 2026-04-28 | Bootstrap controlado de admin definido em `backend/scripts/bootstrap-admin.ts`, com confirmação explícita, no-op quando já existe admin ativo, audit log `ADMIN_BOOTSTRAPPED` e 4 testes. Baseline backend atualizado para 49/236. |
 | 2026-04-29 | Bootstrap controlado executado no Railway contra PostgreSQL de produção: `action=created` para `admin@rodoviariapel.com`; variáveis temporárias `BOOTSTRAP_*` removidas após uso. |
+| 2026-04-29 | Smoke autenticado/API real passou no Railway: login admin, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque`. Raiz do domínio segue backend-only e retorna `NOT_FOUND`, sem frontend estatico publicado. |
 
 ---
 
