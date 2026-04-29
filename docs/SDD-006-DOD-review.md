@@ -3,7 +3,7 @@
 > Projeto: Almox
 > Modulo: SDD-006 - Deploy + Observabilidade
 > Data: 2026-04-29
-> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin e smoke API autenticado executados; frontend estatico implementado localmente; smoke real da raiz/logs/backup pendentes
+> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin, smoke API autenticado e frontend estatico executados; logs/backup/riscos finais pendentes
 
 ---
 
@@ -32,10 +32,10 @@
 | Smoke/deploy real | PASS parcial | Railway em `https://almoxarif-production.up.railway.app`; commit `c6575e5`; `/health/live`, `/health/ready` e `/health` retornando 200 |
 | Bootstrap admin produção | PASS | Railway CLI executou bootstrap controlado; resultado `action=created` para `admin@rodoviariapel.com`; variáveis temporárias removidas |
 | Smoke autenticado/API real | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
-| Frontend estatico | PASS local / PENDENTE Railway | Decisao fechada: publicar no mesmo dominio. `backend/public/**` + `static-frontend.ts` servem `/`, `/apiClient.js` e `/front/*`; falta smoke real apos novo deploy |
+| Frontend estatico | PASS | Railway `GET /` 200 HTML; `/apiClient.js` 200; `/front/css/variables.css` 200 |
 | Alvo operacional | DEFINIDO | Railway Node service + PostgreSQL gerenciado |
 
-Conclusao: o DoD tecnico/documental do recorte implementado esta atendido, o smoke real de health no Railway passou, o bootstrap controlado de primeiro admin foi executado, o smoke autenticado/API passou e a publicacao estatica foi implementada localmente. O SDD-006 ainda nao deve ser marcado como concluido porque faltam validar a raiz do dominio apos deploy, validar logs reais, confirmar backup e registrar riscos residuais finais.
+Conclusao: o DoD tecnico/documental do recorte implementado esta atendido, o smoke real de health no Railway passou, o bootstrap controlado de primeiro admin foi executado, o smoke autenticado/API passou e o frontend estatico foi validado no dominio real. O SDD-006 ainda nao deve ser marcado como concluido porque faltam validar logs reais, confirmar backup e registrar riscos residuais finais.
 
 ---
 
@@ -97,7 +97,7 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 |------|--------|--------|
 | Smoke login em deploy real | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` com sessão válida |
 | Executar bootstrap admin no Railway | PASS | `action=created` para `admin@rodoviariapel.com`; variaveis temporarias `BOOTSTRAP_*` removidas |
-| Frontend estatico no domínio | PENDENTE POS-DEPLOY | Implementacao local pronta; falta validar `https://almoxarif-production.up.railway.app/` retornando HTML apos deploy |
+| Frontend estatico no domínio | PASS | `https://almoxarif-production.up.railway.app/` retornou HTML 200; assets estaticos 200 |
 | Validar `/health/live` e `/health/ready` no Railway | PASS | 2026-04-28: `/health/live` 200; `/health/ready` 200 com `checks.database=connected`; `/health` 200 |
 | Validar logs reais do Railway sem secrets | PENDENTE | Exige runtime real |
 | Confirmar backup gerenciado ou politica manual no Railway | PENDENTE | Exige projeto/plano final |
@@ -109,7 +109,7 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | # | Risco | Severidade | Mitigacao |
 |---|-------|------------|-----------|
-| R1 | Frontend estatico implementado localmente ainda precisa smoke real no dominio Railway apos deploy | Baixo | Validar raiz do dominio retornando HTML e assets `/apiClient.js`/`/front/css/variables.css` |
+| R1 | CSP do frontend precisa de `unsafe-inline` por causa do HTML legado | Medio | Aceito no MVP para publicar sem reescrita do frontend; API permanece com CSP restritiva |
 | R2 | Railway usa porta dinamica e target port pode divergir | Baixo | Evidencia atual: app ouvindo em `0.0.0.0:8080`; dominio ajustado para target port correspondente |
 | R3 | Cookies/CORS podem falhar em dominio real | Medio | Smoke login com HTTPS e `CORS_ORIGIN` exato |
 | R4 | Backup gerenciado pode nao existir no plano escolhido | Alto | Confirmar antes de migration produtiva; usar runbook de backup manual se necessario |
@@ -128,8 +128,7 @@ Status atual:
 
 Proximo passo autorizado:
 
-1. Validar frontend estatico no dominio Railway apos deploy.
-2. Validar logs reais sem secrets.
-3. Confirmar backup gerenciado ou aplicar runbook manual.
-4. Atualizar riscos residuais finais.
-5. So entao marcar SDD-006 como concluido.
+1. Validar logs reais sem secrets.
+2. Confirmar backup gerenciado ou aplicar runbook manual.
+3. Atualizar riscos residuais finais.
+4. So entao marcar SDD-006 como concluido.

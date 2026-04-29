@@ -49,6 +49,7 @@ Test Files  50 passed (50)
 > **Atualização 2026-04-29 (SDD-006 bootstrap produção):** bootstrap controlado executado contra PostgreSQL de produção via Railway CLI e `DATABASE_PUBLIC_URL`; resultado `action=created` para `admin@rodoviariapel.com`. Variáveis temporárias `BOOTSTRAP_*` removidas após execução.
 > **Atualização 2026-04-29 (SDD-006 smoke autenticado/API):** smoke autenticado passou na API real do Railway com `admin@rodoviariapel.com`: login 200, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida. Raiz do domínio segue backend-only e retorna `NOT_FOUND`, sem frontend estático publicado.
 > **Atualizacao 2026-04-29 (SDD-006 frontend estatico):** decisao operacional fechada como publicacao do frontend estatico no mesmo dominio do backend Railway. Adicionado `backend/src/infra/static-frontend.ts`, artefato `backend/public/**` e `static-frontend.test.ts` com 6 testes. Total 236 -> 242 em 50 arquivos.
+> **Atualizacao 2026-04-29 (SDD-006 frontend Railway):** frontend estatico validado no dominio real: `GET /` -> 200 HTML, `HEAD /apiClient.js` -> 200 JS, `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 com CSP restritiva da API.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -285,7 +286,7 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Bootstrap admin produção | PASS | Railway CLI executou `npm --prefix backend run bootstrap:admin` contra `DATABASE_PUBLIC_URL`; resultado `action=created`, email `admin@rodoviariapel.com`; variáveis `BOOTSTRAP_*` removidas |
 | Smoke Railway - autenticado/API | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
 | Frontend estatico local | PASS | `backend/public/**`, `backend/src/infra/static-frontend.ts` e `static-frontend.test.ts`; raiz `/` serve HTML, assets estaticos e CSP de frontend |
-| Smoke Railway - frontend estatico | PENDENTE POS-DEPLOY | Implementacao pronta para o proximo deploy Railway; validar que `https://almoxarif-production.up.railway.app/` retorna HTML em vez de `NOT_FOUND` |
+| Smoke Railway - frontend estatico | PASS | `GET /` -> 200 HTML; `HEAD /apiClient.js` -> 200 JS; `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 |
 
 ---
 
@@ -509,7 +510,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R4 | Cenários de boot dependem de env isolado | BAIXO | Rodar com `DATABASE_URL` de teste e validar `validateEnv/buildApp` |
 | R5 | Rate-limit por IP; em localhost todos os testes compartilham IP | BAIXO | Mitigado via `LOGIN_RATE_LIMIT_MAX` alto em `.env.test` |
 | R6 | Sem job de limpeza de sessões expiradas | BAIXO | Registrado em SDD-001 §7 R1; pendência para módulo posterior |
-| R7 | Frontend estatico implementado localmente ainda precisa validar no dominio Railway apos deploy | BAIXO | Publicacao em mesmo dominio foi implementada via `backend/public/**`; falta smoke real da raiz apos novo deploy |
+| R7 | CSP do frontend precisa de `unsafe-inline` por causa do HTML legado | MÉDIO | Escopo aceito no MVP para não reescrever `index.html`; API mantém CSP restritiva `default-src 'none'` |
 | R8 | CA-D3 não teve falha proposital simulada em produção | BAIXO | Pre-deploy real de sucesso validado; falha de migration fica coberta por runbook e comportamento do Railway |
 | R9 | Senha temporária do admin precisa de política operacional após smoke | MÉDIO | Login real passou; manter ou rotacionar a senha temporária depende da política operacional de credenciais iniciais |
 | R10 | Backup gerenciado/manual ainda não confirmado no Railway | ALTO | Confirmar plano/recurso de backup ou executar runbook manual antes de considerar SDD-006 concluído |
@@ -541,7 +542,7 @@ O SDD-006 adicionou cobertura para env produtiva, health live/ready, security he
 
 **Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendencias para fechamento total do SDD-006:** validar o frontend estatico no dominio Railway apos deploy, validar logs reais sem secrets, confirmar backup e registrar riscos residuais finais.
+**Pendencias para fechamento total do SDD-006:** validar logs reais sem secrets, confirmar backup e registrar riscos residuais finais.
 
 **Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 242 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 
