@@ -50,6 +50,7 @@ Test Files  50 passed (50)
 > **Atualização 2026-04-29 (SDD-006 smoke autenticado/API):** smoke autenticado passou na API real do Railway com `admin@rodoviariapel.com`: login 200, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida. Raiz do domínio segue backend-only e retorna `NOT_FOUND`, sem frontend estático publicado.
 > **Atualizacao 2026-04-29 (SDD-006 frontend estatico):** decisao operacional fechada como publicacao do frontend estatico no mesmo dominio do backend Railway. Adicionado `backend/src/infra/static-frontend.ts`, artefato `backend/public/**` e `static-frontend.test.ts` com 6 testes. Total 236 -> 242 em 50 arquivos.
 > **Atualizacao 2026-04-29 (SDD-006 frontend Railway):** frontend estatico validado no dominio real: `GET /` -> 200 HTML, `HEAD /apiClient.js` -> 200 JS, `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 com CSP restritiva da API.
+> **Atualizacao 2026-04-29 (SDD-006 logs Railway):** logs reais auditados via Railway CLI: 300 linhas app/deploy e 200 linhas HTTP. Resultado: 0 ocorrencias de `DATABASE_URL`, `SESSION_SECRET`, `BOOTSTRAP_*`, URL `postgres://`, `almox_sid`, `set-cookie`, `authorization`, `Bearer`, hash bcrypt ou campos de senha/password.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -287,6 +288,7 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Smoke Railway - autenticado/API | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
 | Frontend estatico local | PASS | `backend/public/**`, `backend/src/infra/static-frontend.ts` e `static-frontend.test.ts`; raiz `/` serve HTML, assets estaticos e CSP de frontend |
 | Smoke Railway - frontend estatico | PASS | `GET /` -> 200 HTML; `HEAD /apiClient.js` -> 200 JS; `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 |
+| Logs Railway sem secrets | PASS | 300 linhas app/deploy + 200 linhas HTTP auditadas; 0 ocorrencias nos padrões sensíveis do SDD-006 |
 
 ---
 
@@ -542,7 +544,7 @@ O SDD-006 adicionou cobertura para env produtiva, health live/ready, security he
 
 **Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendencias para fechamento total do SDD-006:** validar logs reais sem secrets, confirmar backup e registrar riscos residuais finais.
+**Pendencias para fechamento total do SDD-006:** confirmar backup e registrar riscos residuais finais.
 
 **Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 242 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 

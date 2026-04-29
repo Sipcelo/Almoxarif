@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-29 (SDD-006 frontend estatico validado no Railway)
+> **Última atualização:** 2026-04-29 (SDD-006 logs reais validados no Railway)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -11,7 +11,7 @@
 | Métrica | Valor |
 |---------|-------|
 | SDDs concluídos | **5 de 6** (SDD-001 + SDD-002 + SDD-003 + SDD-004 + SDD-005; SDD-001-FIX concluido como adendo) |
-| SDDs pendentes | 1 (SDD-006 com deploy/health/bootstrap/smoke API/frontend estatico validados; logs, backup e riscos finais pendentes) |
+| SDDs pendentes | 1 (SDD-006 com deploy/health/bootstrap/smoke API/frontend estatico/logs validados; backup e riscos finais pendentes) |
 | Testes totais | **304/304 passando** (242 backend + 62 frontend apiClient) |
 | Arquivos de teste | 51 (50 backend + 1 frontend) |
 | Testes `skip`/`todo` | 0 |
@@ -32,7 +32,7 @@
 | **SDD-003** | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | ✅ **CONCLUÍDO** | 160 (cumulativo, +27) | `docs/SDD-003-Inv-Stock.md`, `docs/SDD-003-DESIGN-Inv-Stock.md`, Bloco H |
 | **SDD-004** | Integracao Frontend ↔ Backend (substituir localStorage por fetch API) | ✅ **CONCLUIDO** (PR-1 ao PR-9 + Addendum A Acessos) | 180 backend + 62 frontend | `apiClient.js`, `front/js/auth.js`, `front/js/pages/dashboard.js`, `front/js/pages/pages.js`, `front/js/modals.js`, `front/js/utils.js`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/08-usuarios.spec.ts`, `e2e/tests/09-relatorios.spec.ts` |
 | **SDD-005** | Reports + Audit endpoints | ✅ **CONCLUÍDO** | 213 backend (cumulativo, +33) | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
-| **SDD-006** | Deploy + Observabilidade | **DEPLOY/HEALTH/FRONTEND STATIC REAL VALIDADO PARCIALMENTE** | 242 backend (cumulativo, +29) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/static-frontend.ts`, `backend/public/**`, `backend/scripts/bootstrap-admin.ts`, Railway `https://almoxarif-production.up.railway.app`, `/` 200 HTML, `/apiClient.js` 200, `/front/css/variables.css` 200, `/health/ready` 200 |
+| **SDD-006** | Deploy + Observabilidade | **DEPLOY/HEALTH/FRONTEND/LOGS REAL VALIDADO PARCIALMENTE** | 242 backend (cumulativo, +29) | `backend/src/config/env.ts`, `backend/src/infra/healthcheck.ts`, `backend/src/infra/security-headers.ts`, `backend/src/infra/static-frontend.ts`, `backend/public/**`, `backend/scripts/bootstrap-admin.ts`, Railway `https://almoxarif-production.up.railway.app`, `/` 200 HTML, `/apiClient.js` 200, `/front/css/variables.css` 200, `/health/ready` 200, logs Railway sem secrets |
 
 ---
 
@@ -186,10 +186,10 @@ Ativado via `SEED_ENABLED=true`.
 | Smoke real de health | ✅ validado | `GET /health/live` -> 200; `GET /health/ready` -> 200 com `checks.database=connected`; `GET /health` -> 200 |
 | Smoke autenticado/API real | ✅ validado | Login com `admin@rodoviariapel.com`, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` passaram na API real do Railway |
 | Frontend estatico no dominio | ✅ validado no Railway | `GET /` -> 200 HTML; `HEAD /apiClient.js` -> 200 JS; `HEAD /front/css/variables.css` -> 200 CSS; API continua em `/api/v1` |
+| Logs reais Railway sem secrets | ✅ validado | Railway CLI: 300 linhas app/deploy + 200 linhas HTTP auditadas; 0 ocorrencias para `DATABASE_URL`, `SESSION_SECRET`, `BOOTSTRAP_*`, `postgres://`, `almox_sid`, `set-cookie`, `authorization`, `Bearer`, hash bcrypt e campos `senha`/`password` |
 
 Pendências para fechamento do SDD-006:
 
-- Validar logs reais do Railway sem exposição de secrets.
 - Confirmar política de backup gerenciado/manual no Railway.
 - Registrar riscos residuais finais antes de marcar o SDD como concluído.
 
@@ -296,7 +296,6 @@ Comando executado para validação do fechamento:
 ### 7.1 Imediato — SDD-006 (Deploy + Observabilidade)
 
 Escopo imediato:
-- validar logs reais do Railway sem secrets
 - confirmar backup gerenciado ou runbook manual aplicável ao plano atual
 
 ### 7.2 Médio prazo
@@ -345,6 +344,7 @@ Escopo imediato:
 | 2026-04-29 | Smoke autenticado/API real passou no Railway: login admin, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque`. Raiz do domínio segue backend-only e retorna `NOT_FOUND`, sem frontend estatico publicado. |
 | 2026-04-29 | Decisao de frontend/API-only fechada como publicacao do frontend estatico no mesmo dominio Railway. Implementados `backend/src/infra/static-frontend.ts`, `backend/public/**` e `static-frontend.test.ts`; baseline backend atualizado para 50/242 e suite total para 304/304. |
 | 2026-04-29 | Frontend estatico validado no Railway apos deploy `2fb9e8f`: `GET /` retornou HTML 200, `/apiClient.js` 200, `/front/css/variables.css` 200 e `/health/ready` permaneceu 200. |
+| 2026-04-29 | Logs reais do Railway validados sem secrets: 300 linhas app/deploy e 200 linhas HTTP auditadas, sem ocorrencias de variaveis sensiveis, URLs de conexao, cookies, authorization, Bearer, hashes bcrypt ou campos de senha. |
 
 ---
 
