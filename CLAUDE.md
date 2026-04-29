@@ -475,8 +475,8 @@ Base operacional ja validada:
 - Alvo operacional definido: Railway Node service + PostgreSQL gerenciado.
 - Deploy real Railway validado parcialmente em 2026-04-28: commit `c6575e5`, migration sem pendencias, app ouvindo em `0.0.0.0:8080`, `/health/live`, `/health/ready` e `/health` retornando 200; readiness com `database=connected`.
 - Smoke autenticado/API real tentado em 2026-04-28: login admin e operador padrao retornou 401; banco produtivo sem usuario inicial/controlado.
-- Bootstrap controlado de admin definido/testado em `backend/scripts/bootstrap-admin.ts`; falta executar one-off no Railway.
-- Pendente para fechamento total: execucao produtiva do bootstrap controlado de usuario inicial, smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
+- Bootstrap controlado de admin executado em 2026-04-29 via Railway CLI; resultado `action=created` para `admin@rodoviariapel.com`; variaveis temporarias `BOOTSTRAP_*` removidas.
+- Pendente para fechamento total: smoke autenticado/API real, validacao de logs reais sem secrets, confirmacao de backup e registro final de riscos residuais.
 
 ---
 

@@ -2,8 +2,8 @@
 
 > Projeto: Almox
 > Modulo: SDD-006 - Deploy + Observabilidade
-> Data: 2026-04-28
-> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin definido/testado; smoke autenticado bloqueado ate execucao produtiva do bootstrap
+> Data: 2026-04-29
+> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin executado; smoke autenticado pendente
 
 ---
 
@@ -30,9 +30,10 @@
 | Runbooks | PASS | 5 runbooks criados em `docs/runbooks/` |
 | Documentacao de progresso/testes/contexto | PASS | `PROGRESS.md`, `RELATORIO-TESTES-SPEC-001.md`, `AGENTS.md`, `CLAUDE.md`, `WORKTREE-TRANSPLANTE.md` atualizados |
 | Smoke/deploy real | PASS parcial | Railway em `https://almoxarif-production.up.railway.app`; commit `c6575e5`; `/health/live`, `/health/ready` e `/health` retornando 200 |
+| Bootstrap admin produção | PASS | Railway CLI executou bootstrap controlado; resultado `action=created` para `admin@rodoviariapel.com`; variáveis temporárias removidas |
 | Alvo operacional | DEFINIDO | Railway Node service + PostgreSQL gerenciado |
 
-Conclusao: o DoD tecnico/documental do recorte implementado esta atendido e o smoke real de health no Railway passou. O smoke autenticado/API foi tentado e bloqueou em login 401 para os usuarios padrao. O bootstrap controlado de primeiro admin foi definido e testado localmente, mas ainda precisa ser executado no Railway. O SDD-006 ainda nao deve ser marcado como concluido porque faltam smoke autenticado/API, validacao de logs reais, confirmacao de backup e registro final de riscos residuais.
+Conclusao: o DoD tecnico/documental do recorte implementado esta atendido, o smoke real de health no Railway passou e o bootstrap controlado de primeiro admin foi executado. O SDD-006 ainda nao deve ser marcado como concluido porque faltam smoke autenticado/API, validacao de logs reais, confirmacao de backup e registro final de riscos residuais.
 
 ---
 
@@ -91,8 +92,8 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | Item | Status | Motivo |
 |------|--------|--------|
-| Smoke login em deploy real | BLOQUEADO | `POST /api/v1/auth/login` com admin padrao -> 401; operador padrao -> 401; exige execucao do bootstrap controlado de usuario inicial |
-| Executar bootstrap admin no Railway | PENDENTE | Script definido/testado localmente; falta rodar one-off com variaveis temporarias no ambiente Railway |
+| Smoke login em deploy real | PENDENTE | Admin inicial criado; falta login com senha temporaria controlada, `/api/v1/auth/me` e endpoints principais |
+| Executar bootstrap admin no Railway | PASS | `action=created` para `admin@rodoviariapel.com`; variaveis temporarias `BOOTSTRAP_*` removidas |
 | Validar `/health/live` e `/health/ready` no Railway | PASS | 2026-04-28: `/health/live` 200; `/health/ready` 200 com `checks.database=connected`; `/health` 200 |
 | Validar logs reais do Railway sem secrets | PENDENTE | Exige runtime real |
 | Confirmar backup gerenciado ou politica manual no Railway | PENDENTE | Exige projeto/plano final |
@@ -104,12 +105,12 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 | # | Risco | Severidade | Mitigacao |
 |---|-------|------------|-----------|
-| R1 | Smoke autenticado/API real bloqueado por ausencia de usuario inicial | Medio | Executar bootstrap controlado no Railway e testar login/me/endpoints principais |
+| R1 | Smoke autenticado/API real ainda nao reexecutado apos bootstrap | Medio | Testar login/me/endpoints principais com o admin controlado |
 | R2 | Railway usa porta dinamica e target port pode divergir | Baixo | Evidencia atual: app ouvindo em `0.0.0.0:8080`; dominio ajustado para target port correspondente |
 | R3 | Cookies/CORS podem falhar em dominio real | Medio | Smoke login com HTTPS e `CORS_ORIGIN` exato |
 | R4 | Backup gerenciado pode nao existir no plano escolhido | Alto | Confirmar antes de migration produtiva; usar runbook de backup manual se necessario |
 | R5 | Logs reais podem conter metadados do provedor fora do controle da app | Baixo | Revisar logs apos smoke e ajustar configuracao se necessario |
-| R6 | Banco produtivo nao tem usuario inicial validado pelo smoke | Medio | `SEED_ENABLED=false` e necessario em producao; script de bootstrap definido, falta execucao produtiva |
+| R6 | Usuario inicial criado, mas sem validacao completa de login | Medio | Bootstrap executado; falta smoke autenticado e rotacao/remocao operacional da senha temporaria |
 
 ---
 
@@ -123,10 +124,8 @@ Status atual:
 
 Proximo passo autorizado:
 
-1. Publicar/deployar o script de bootstrap controlado de usuario inicial/admin.
-2. Executar o bootstrap one-off no Railway.
-3. Reexecutar smoke autenticado/API real no Railway.
-4. Validar logs reais sem secrets.
-5. Confirmar backup gerenciado ou aplicar runbook manual.
-6. Atualizar riscos residuais finais.
-7. So entao marcar SDD-006 como concluido.
+1. Reexecutar smoke autenticado/API real no Railway.
+2. Validar logs reais sem secrets.
+3. Confirmar backup gerenciado ou aplicar runbook manual.
+4. Atualizar riscos residuais finais.
+5. So entao marcar SDD-006 como concluido.
