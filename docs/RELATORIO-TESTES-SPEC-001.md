@@ -519,6 +519,19 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R9 | Senha temporária do admin precisa de política operacional após smoke | MÉDIO | Login real passou; manter ou rotacionar a senha temporária depende da política operacional de credenciais iniciais |
 | R10 | Backup gerenciado nao foi confirmavel via CLI Railway | BAIXO | Runbook manual aplicado com `pg_dump`, checksum e restore testado em PostgreSQL 18 temporario; para rotina futura, confirmar/agendar backups na aba Backups do volume no Railway UI |
 
+### Aceite final dos riscos SDD-006
+
+Os riscos residuais operacionais finais do SDD-006 foram consolidados em `docs/SDD-006-DOD-review.md` e aceitos para fechamento:
+
+| # | Risco residual final | Severidade | Tratamento |
+|---|----------------------|------------|------------|
+| R1 | CSP do frontend legado exige `unsafe-inline` | Medio | Aceito no MVP; API segue com CSP restritiva |
+| R2 | Backup agendado depende de confirmacao/configuracao pela UI Railway | Medio | Backup manual com restore testado cobre o recorte; agenda futura na aba Backups |
+| R3 | Falha proposital de migration nao foi simulada em producao | Baixo | Coberta por pre-deploy + runbook; simular em staging futuro |
+| R4 | Senha temporaria do admin inicial exige politica operacional | Medio | Smoke passou; rotacionar ou aplicar guarda interna |
+| R5 | Logs HTTP incluem metadados operacionais nao secretos | Baixo | Aceito para observabilidade; secrets ausentes nos logs reais auditados |
+| R6 | Configuracao Railway pode sofrer drift manual | Medio | Revalidar runbook antes de deploys com migration |
+
 ---
 
 ## Rollback
@@ -540,13 +553,13 @@ Regras vigentes:
 
 ## Conclusão
 
-O baseline acumulado até a implementação parcial do SDD-006 está validado com **50 arquivos backend / 242 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
+O baseline acumulado até a conclusão do SDD-006 está validado com **50 arquivos backend / 242 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
 
 O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact, graceful shutdown, bootstrap controlado de primeiro admin e frontend estatico em mesmo dominio. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo e no Railway.
 
-**Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
+**Definition of Done técnico automatizado e operacional do SDD-006: atingido. Smoke real no Railway, logs, backup manual com restore e riscos residuais finais: atingidos.**
 
-**Pendencias para fechamento total do SDD-006:** registrar riscos residuais finais.
+**Pendencias para fechamento total do SDD-006:** nenhuma.
 
 **Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 242 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 

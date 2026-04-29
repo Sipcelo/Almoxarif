@@ -3,7 +3,7 @@
 > Projeto: Almox
 > Modulo: SDD-006 - Deploy + Observabilidade
 > Data: 2026-04-29
-> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin, smoke API autenticado, frontend estatico, logs reais e backup manual executados; riscos finais pendentes
+> Status: CONCLUIDO; DoD tecnico/documental e operacional validado; riscos residuais finais registrados e aceitos
 
 ---
 
@@ -29,7 +29,7 @@
 | Migration em banco limpo | PASS | `prisma migrate deploy` aplicou `00000000000000_baseline` em PostgreSQL temporario limpo |
 | Runbooks | PASS | 5 runbooks criados em `docs/runbooks/` |
 | Documentacao de progresso/testes/contexto | PASS | `PROGRESS.md`, `RELATORIO-TESTES-SPEC-001.md`, `AGENTS.md`, `CLAUDE.md`, `WORKTREE-TRANSPLANTE.md` atualizados |
-| Smoke/deploy real | PASS parcial | Railway em `https://almoxarif-production.up.railway.app`; commit `c6575e5`; `/health/live`, `/health/ready` e `/health` retornando 200 |
+| Smoke/deploy real | PASS | Railway em `https://almoxarif-production.up.railway.app`; `/health/live`, `/health/ready`, `/health`, frontend estatico e smoke autenticado validados |
 | Bootstrap admin produção | PASS | Railway CLI executou bootstrap controlado; resultado `action=created` para `admin@rodoviariapel.com`; variáveis temporárias removidas |
 | Smoke autenticado/API real | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
 | Frontend estatico | PASS | Railway `GET /` 200 HTML; `/apiClient.js` 200; `/front/css/variables.css` 200 |
@@ -37,7 +37,7 @@
 | Backup manual + restore | PASS | Backup gerenciado nao confirmavel via CLI; dump custom fora do repo, SHA-256 registrado, `pg_restore --list` PASS e restore PASS em Docker PostgreSQL 18 temporario |
 | Alvo operacional | DEFINIDO | Railway Node service + PostgreSQL gerenciado |
 
-Conclusao: o DoD tecnico/documental do recorte implementado esta atendido, o smoke real de health no Railway passou, o bootstrap controlado de primeiro admin foi executado, o smoke autenticado/API passou, o frontend estatico foi validado no dominio real, os logs reais foram auditados sem secrets e o backup manual foi restaurado em ambiente temporario. O SDD-006 ainda nao deve ser marcado como concluido porque falta registrar riscos residuais finais.
+Conclusao: o DoD tecnico/documental e operacional do SDD-006 esta atendido. O smoke real de health no Railway passou, o bootstrap controlado de primeiro admin foi executado, o smoke autenticado/API passou, o frontend estatico foi validado no dominio real, os logs reais foram auditados sem secrets, o backup manual foi restaurado em ambiente temporario e os riscos residuais finais foram registrados. O SDD-006 pode ser marcado como concluido.
 
 ---
 
@@ -91,9 +91,9 @@ Fonte: `docs/SDD-006-DESIGN-deploy-observabilidade.md` secao 10.
 
 ---
 
-## 5. Criterios ainda nao fechados em ambiente real
+## 5. Criterios de ambiente real
 
-Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o SDD-006 como concluido operacionalmente.
+Estes itens fecham o DoD operacional real do SDD-006.
 
 | Item | Status | Motivo |
 |------|--------|--------|
@@ -109,14 +109,16 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 
 ## 6. Riscos residuais para fechamento total
 
-| # | Risco | Severidade | Mitigacao |
-|---|-------|------------|-----------|
-| R1 | CSP do frontend precisa de `unsafe-inline` por causa do HTML legado | Medio | Aceito no MVP para publicar sem reescrita do frontend; API permanece com CSP restritiva |
-| R2 | Railway usa porta dinamica e target port pode divergir | Baixo | Evidencia atual: app ouvindo em `0.0.0.0:8080`; dominio ajustado para target port correspondente |
-| R3 | Cookies/CORS podem falhar em dominio real | Medio | Smoke login com HTTPS e `CORS_ORIGIN` exato |
-| R4 | Backup gerenciado/agendado depende de confirmacao na UI do Railway | Medio | Manual fallback aplicado e testado; rotina futura deve configurar agenda Daily/Weekly na aba Backups do volume Postgres |
-| R5 | Logs HTTP reais ainda incluem metadados operacionais nao secretos, como path/status/deploymentId | Baixo | Aceito para observabilidade; validacao confirmou ausencia de secrets, cookies e headers sensiveis |
-| R6 | Senha temporaria do admin precisa de politica operacional | Medio | Smoke autenticado passou; decidir manutencao/rotacao da credencial inicial |
+Riscos aceitos como residuais do SDD-006. Nenhum bloqueia o fechamento, mas todos permanecem rastreados para operacao continua ou SDD futuro.
+
+| # | Risco residual final | Severidade | Aceite/Mitigacao | Proximo tratamento |
+|---|----------------------|------------|------------------|-------------------|
+| R1 | CSP do frontend precisa de `unsafe-inline` por causa do HTML legado | Medio | Aceito no MVP para publicar sem reescrita do frontend; API permanece com CSP restritiva `default-src 'none'` | Endurecer CSP quando houver refactor do frontend legado |
+| R2 | Backup gerenciado/agendado depende de confirmacao na UI do Railway | Medio | Backup manual aplicado com `pg_dump`, SHA-256 e restore testado em Docker PostgreSQL 18; dados ficam protegidos para o recorte atual | Configurar agenda Daily/Weekly na aba Backups do volume Postgres no Railway UI |
+| R3 | CA-D3 nao teve falha proposital simulada em producao | Baixo | Railway pre-deploy executou `prisma migrate deploy` antes do start; falha de migration fica coberta por runbook e comportamento esperado do provedor | Simular em staging quando houver ambiente separado |
+| R4 | Senha temporaria do admin inicial exige politica operacional pos-smoke | Medio | Bootstrap e login passaram; senha nao foi exposta nos logs auditados | Rotacionar a credencial inicial ou aplicar politica interna de guarda/uso |
+| R5 | Logs HTTP reais incluem metadados operacionais nao secretos, como path/status/deploymentId | Baixo | Aceito para observabilidade; validacao confirmou ausencia de secrets, cookies e headers sensiveis | Revisar periodicamente junto dos logs de deploy |
+| R6 | Configuracoes Railway podem sofrer drift manual, como target port, env vars e healthcheck path | Medio | Estado atual validado: target operacional, `/health/ready`, env produtiva e dominio passaram no smoke | Revalidar checklist do runbook antes de cada deploy com migration |
 
 ---
 
@@ -125,10 +127,8 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 Status atual:
 
 - DoD tecnico/documental local: PASS.
-- Deploy/health real no Railway: PASS parcial.
-- Fechamento operacional total do SDD-006: PENDENTE.
+- Deploy/health real no Railway: PASS.
+- Fechamento operacional total do SDD-006: PASS.
+- Riscos residuais finais: REGISTRADOS E ACEITOS.
 
-Proximo passo autorizado:
-
-1. Atualizar riscos residuais finais.
-2. So entao marcar SDD-006 como concluido.
+Gate: **SDD-006 CONCLUIDO**.
