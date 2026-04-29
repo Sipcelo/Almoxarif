@@ -52,6 +52,7 @@ Test Files  50 passed (50)
 > **Atualizacao 2026-04-29 (SDD-006 frontend Railway):** frontend estatico validado no dominio real: `GET /` -> 200 HTML, `HEAD /apiClient.js` -> 200 JS, `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 com CSP restritiva da API.
 > **Atualizacao 2026-04-29 (SDD-006 logs Railway):** logs reais auditados via Railway CLI: 300 linhas app/deploy e 200 linhas HTTP. Resultado: 0 ocorrencias de `DATABASE_URL`, `SESSION_SECRET`, `BOOTSTRAP_*`, URL `postgres://`, `almox_sid`, `set-cookie`, `authorization`, `Bearer`, hash bcrypt ou campos de senha/password.
 > **Atualizacao 2026-04-29 (SDD-006 backup manual):** backup gerenciado nao foi confirmavel via CLI; aplicado runbook manual. `pg_dump` custom salvo fora do repo em `D:\monetizando\almox-backups\SDD-006\almox-railway-prod-20260429-151151.dump`, SHA-256 `264A923AA86F78ADE13CE4805C87A5B03732F18762779F9B8792E382B4F8AAE8`, `pg_restore --list` PASS e restore PASS em Docker PostgreSQL 18 temporario.
+> **Atualizacao 2026-04-29 (E2E usabilidade entrada em massa):** adicionado `e2e/tests/10-usabilidade-entrada-massa.spec.ts`; suite Playwright completa `npm --prefix e2e test` passou com 11/11. Validou 9 funcionarios pela UI, 100 itens/entradas autenticadas e soma renderizada em Entradas/Estoque. Nao altera o baseline canonico backend/apiClient de 304/304; abre gap EM-001 para entrada por nota/lote em unica acao.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---

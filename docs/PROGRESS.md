@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-29 (SDD-006 concluido)
+> **Última atualização:** 2026-04-29 (teste UI de entrada em massa)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -13,12 +13,13 @@
 | SDDs concluídos | **6 de 6** (SDD-001 a SDD-006; SDD-001-FIX concluido como adendo) |
 | SDDs pendentes | 0 |
 | Testes totais | **304/304 passando** (242 backend + 62 frontend apiClient) |
-| Arquivos de teste | 51 (50 backend + 1 frontend) |
+| E2E UI Playwright | **11/11 passando** |
+| Arquivos de teste | 51 canônicos (50 backend + 1 frontend) + 10 specs E2E UI |
 | Testes `skip`/`todo` | 0 |
 | Tempo de execucao da suite | ~49s (backend 47.40s + frontend 1.33s) |
 | TypeScript `tsc --noEmit` | ✅ limpo |
 | Débitos técnicos de código | **ZERO** |
-| Débitos de feature gap | **ZERO** (CA-A4, CA-I2 e CA-I3 fechados em 2026-04-18) |
+| Débitos de feature gap | **1 gap de produto aberto**: entrada em massa por nota/lote exige SPEC propria |
 
 ---
 
@@ -274,7 +275,11 @@ Observações:
 
 ### 6.2 Débitos de feature gap
 
-**ZERO em aberto.**
+**1 gap de produto aberto.**
+
+| # | Item | Status | Evidência |
+|---|------|--------|-----------|
+| EM-001 | Entrada em massa por nota/lote em uma unica acao | SPEC necessaria | `docs/RELATORIO-USABILIDADE-ENTRADA-MASSA.md`, `e2e/tests/10-usabilidade-entrada-massa.spec.ts` |
 
 Fechados em 2026-04-18:
 
@@ -294,7 +299,7 @@ Comando executado para validação do fechamento:
 
 ### 7.1 Imediato
 
-Nenhum item técnico imediato aberto. Próximo avanço exige nova SPEC aprovada.
+Definir se EM-001 vira novo SDD. O teste de usabilidade confirmou que a UI atual renderiza 100 itens/entradas e soma corretamente os valores lancados, mas nao existe fluxo de nota/lote em uma unica acao.
 
 ### 7.2 Médio prazo
 
@@ -345,6 +350,7 @@ Nenhum item técnico imediato aberto. Próximo avanço exige nova SPEC aprovada.
 | 2026-04-29 | Logs reais do Railway validados sem secrets: 300 linhas app/deploy e 200 linhas HTTP auditadas, sem ocorrencias de variaveis sensiveis, URLs de conexao, cookies, authorization, Bearer, hashes bcrypt ou campos de senha. |
 | 2026-04-29 | Backup manual aplicado porque backup gerenciado nao foi confirmavel via CLI. Dump fora do repo em `D:\monetizando\almox-backups\SDD-006`, SHA-256 registrado, `pg_restore --list` PASS e restore testado em PostgreSQL 18 temporario no Docker; container removido apos validacao. |
 | 2026-04-29 | Riscos residuais finais do SDD-006 registrados e aceitos; SDD-006 marcado como concluido. |
+| 2026-04-29 | Teste UI de usabilidade para entrada em massa adicionado: 9 funcionarios criados pela UI, 100 itens/entradas carregados de forma autenticada, soma de quantidades/valores validada em Entradas e Estoque. Suite E2E: 11/11 PASS. Gap EM-001 aberto para entrada por nota/lote em unica acao. |
 
 ---
 
