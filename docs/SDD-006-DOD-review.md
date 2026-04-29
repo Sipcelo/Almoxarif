@@ -3,7 +3,7 @@
 > Projeto: Almox
 > Modulo: SDD-006 - Deploy + Observabilidade
 > Data: 2026-04-29
-> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin, smoke API autenticado, frontend estatico e logs reais executados; backup/riscos finais pendentes
+> Status: DoD tecnico/documental validado; deploy/health real no Railway validado; bootstrap admin, smoke API autenticado, frontend estatico, logs reais e backup manual executados; riscos finais pendentes
 
 ---
 
@@ -34,9 +34,10 @@
 | Smoke autenticado/API real | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
 | Frontend estatico | PASS | Railway `GET /` 200 HTML; `/apiClient.js` 200; `/front/css/variables.css` 200 |
 | Logs reais sem secrets | PASS | Railway CLI auditou 300 linhas app/deploy + 200 linhas HTTP; 0 ocorrencias de variaveis sensiveis, cookies, authorization, Bearer, hashes bcrypt ou campos de senha |
+| Backup manual + restore | PASS | Backup gerenciado nao confirmavel via CLI; dump custom fora do repo, SHA-256 registrado, `pg_restore --list` PASS e restore PASS em Docker PostgreSQL 18 temporario |
 | Alvo operacional | DEFINIDO | Railway Node service + PostgreSQL gerenciado |
 
-Conclusao: o DoD tecnico/documental do recorte implementado esta atendido, o smoke real de health no Railway passou, o bootstrap controlado de primeiro admin foi executado, o smoke autenticado/API passou, o frontend estatico foi validado no dominio real e os logs reais foram auditados sem secrets. O SDD-006 ainda nao deve ser marcado como concluido porque faltam confirmar backup e registrar riscos residuais finais.
+Conclusao: o DoD tecnico/documental do recorte implementado esta atendido, o smoke real de health no Railway passou, o bootstrap controlado de primeiro admin foi executado, o smoke autenticado/API passou, o frontend estatico foi validado no dominio real, os logs reais foram auditados sem secrets e o backup manual foi restaurado em ambiente temporario. O SDD-006 ainda nao deve ser marcado como concluido porque falta registrar riscos residuais finais.
 
 ---
 
@@ -101,7 +102,7 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 | Frontend estatico no domínio | PASS | `https://almoxarif-production.up.railway.app/` retornou HTML 200; assets estaticos 200 |
 | Validar `/health/live` e `/health/ready` no Railway | PASS | 2026-04-28: `/health/live` 200; `/health/ready` 200 com `checks.database=connected`; `/health` 200 |
 | Validar logs reais do Railway sem secrets | PASS | 300 linhas app/deploy + 200 linhas HTTP auditadas; 0 ocorrencias nos padroes sensiveis do SDD-006 |
-| Confirmar backup gerenciado ou politica manual no Railway | PENDENTE | Exige projeto/plano final |
+| Confirmar backup gerenciado ou politica manual no Railway | PASS | Backup gerenciado nao confirmado pela CLI; politica manual aplicada conforme runbook com `pg_dump`, checksum e restore testado em Docker PostgreSQL 18 |
 | CA-D3: migration falha nao promove versao ready | PARCIAL | Railway pre-deploy executou `prisma migrate deploy` antes do start; falha proposital de migration nao foi simulada |
 
 ---
@@ -113,7 +114,7 @@ Estes itens nao bloqueiam o DoD tecnico/documental local, mas bloqueiam marcar o
 | R1 | CSP do frontend precisa de `unsafe-inline` por causa do HTML legado | Medio | Aceito no MVP para publicar sem reescrita do frontend; API permanece com CSP restritiva |
 | R2 | Railway usa porta dinamica e target port pode divergir | Baixo | Evidencia atual: app ouvindo em `0.0.0.0:8080`; dominio ajustado para target port correspondente |
 | R3 | Cookies/CORS podem falhar em dominio real | Medio | Smoke login com HTTPS e `CORS_ORIGIN` exato |
-| R4 | Backup gerenciado pode nao existir no plano escolhido | Alto | Confirmar antes de migration produtiva; usar runbook de backup manual se necessario |
+| R4 | Backup gerenciado/agendado depende de confirmacao na UI do Railway | Medio | Manual fallback aplicado e testado; rotina futura deve configurar agenda Daily/Weekly na aba Backups do volume Postgres |
 | R5 | Logs HTTP reais ainda incluem metadados operacionais nao secretos, como path/status/deploymentId | Baixo | Aceito para observabilidade; validacao confirmou ausencia de secrets, cookies e headers sensiveis |
 | R6 | Senha temporaria do admin precisa de politica operacional | Medio | Smoke autenticado passou; decidir manutencao/rotacao da credencial inicial |
 
@@ -129,6 +130,5 @@ Status atual:
 
 Proximo passo autorizado:
 
-1. Confirmar backup gerenciado ou aplicar runbook manual.
-2. Atualizar riscos residuais finais.
-3. So entao marcar SDD-006 como concluido.
+1. Atualizar riscos residuais finais.
+2. So entao marcar SDD-006 como concluido.

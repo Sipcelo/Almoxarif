@@ -51,6 +51,7 @@ Test Files  50 passed (50)
 > **Atualizacao 2026-04-29 (SDD-006 frontend estatico):** decisao operacional fechada como publicacao do frontend estatico no mesmo dominio do backend Railway. Adicionado `backend/src/infra/static-frontend.ts`, artefato `backend/public/**` e `static-frontend.test.ts` com 6 testes. Total 236 -> 242 em 50 arquivos.
 > **Atualizacao 2026-04-29 (SDD-006 frontend Railway):** frontend estatico validado no dominio real: `GET /` -> 200 HTML, `HEAD /apiClient.js` -> 200 JS, `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 com CSP restritiva da API.
 > **Atualizacao 2026-04-29 (SDD-006 logs Railway):** logs reais auditados via Railway CLI: 300 linhas app/deploy e 200 linhas HTTP. Resultado: 0 ocorrencias de `DATABASE_URL`, `SESSION_SECRET`, `BOOTSTRAP_*`, URL `postgres://`, `almox_sid`, `set-cookie`, `authorization`, `Bearer`, hash bcrypt ou campos de senha/password.
+> **Atualizacao 2026-04-29 (SDD-006 backup manual):** backup gerenciado nao foi confirmavel via CLI; aplicado runbook manual. `pg_dump` custom salvo fora do repo em `D:\monetizando\almox-backups\SDD-006\almox-railway-prod-20260429-151151.dump`, SHA-256 `264A923AA86F78ADE13CE4805C87A5B03732F18762779F9B8792E382B4F8AAE8`, `pg_restore --list` PASS e restore PASS em Docker PostgreSQL 18 temporario.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -289,6 +290,7 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Frontend estatico local | PASS | `backend/public/**`, `backend/src/infra/static-frontend.ts` e `static-frontend.test.ts`; raiz `/` serve HTML, assets estaticos e CSP de frontend |
 | Smoke Railway - frontend estatico | PASS | `GET /` -> 200 HTML; `HEAD /apiClient.js` -> 200 JS; `HEAD /front/css/variables.css` -> 200 CSS; `/health/ready` continuou 200 |
 | Logs Railway sem secrets | PASS | 300 linhas app/deploy + 200 linhas HTTP auditadas; 0 ocorrencias nos padrões sensíveis do SDD-006 |
+| Backup manual + restore | PASS | `pg_dump` custom fora do repo; SHA-256 registrado; `pg_restore --list` 100 linhas; restore em Docker PostgreSQL 18 temporario validou 13 tabelas, 1 admin ativo, 1 migration e 9 audit logs |
 
 ---
 
@@ -515,7 +517,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R7 | CSP do frontend precisa de `unsafe-inline` por causa do HTML legado | MÉDIO | Escopo aceito no MVP para não reescrever `index.html`; API mantém CSP restritiva `default-src 'none'` |
 | R8 | CA-D3 não teve falha proposital simulada em produção | BAIXO | Pre-deploy real de sucesso validado; falha de migration fica coberta por runbook e comportamento do Railway |
 | R9 | Senha temporária do admin precisa de política operacional após smoke | MÉDIO | Login real passou; manter ou rotacionar a senha temporária depende da política operacional de credenciais iniciais |
-| R10 | Backup gerenciado/manual ainda não confirmado no Railway | ALTO | Confirmar plano/recurso de backup ou executar runbook manual antes de considerar SDD-006 concluído |
+| R10 | Backup gerenciado nao foi confirmavel via CLI Railway | BAIXO | Runbook manual aplicado com `pg_dump`, checksum e restore testado em PostgreSQL 18 temporario; para rotina futura, confirmar/agendar backups na aba Backups do volume no Railway UI |
 
 ---
 
@@ -544,7 +546,7 @@ O SDD-006 adicionou cobertura para env produtiva, health live/ready, security he
 
 **Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendencias para fechamento total do SDD-006:** confirmar backup e registrar riscos residuais finais.
+**Pendencias para fechamento total do SDD-006:** registrar riscos residuais finais.
 
 **Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 242 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 

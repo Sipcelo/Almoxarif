@@ -448,7 +448,7 @@ Com base na análise do estado atual, a sequência sugerida de evolução é:
 | SDD-003 | Inventory + Stock Movements (Itens, Entradas, Saídas, ajustes auditados) | **CONCLUÍDO** | `docs/SDD-003-Inv-Stock.md`, `backend/src/modules/inventory/**`, `backend/src/modules/stock-movements/**` |
 | SDD-004 | Integração Frontend ↔ Backend (substituir localStorage por fetch API) | **CONCLUÍDO** | `apiClient.js`, `test-frontend/apiClient.test.ts`, `front/js/**`, `backend/scripts/import-legacy.ts`, `backend/test/import-legacy.test.ts`, `e2e/tests/**` |
 | SDD-005 | Reports + Audit endpoints | **CONCLUÍDO** | `docs/SDD-005-reports-audit.md`, `backend/src/modules/reports/**`, `backend/src/modules/audit/**`, `backend/test/reports.test.ts`, `backend/test/audit-query.test.ts` |
-| SDD-006 | Deploy + Observabilidade | **DEPLOY/HEALTH/FRONTEND/LOGS REAL VALIDADO PARCIALMENTE** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, `backend/scripts/bootstrap-admin.ts`, `backend/src/infra/static-frontend.ts`, `backend/public/**`, Railway `https://almoxarif-production.up.railway.app`, `/` 200 HTML, `/health/ready` 200 com `database=connected`, logs reais sem secrets |
+| SDD-006 | Deploy + Observabilidade | **DEPLOY/HEALTH/FRONTEND/LOGS/BACKUP MANUAL VALIDADO; RISCOS FINAIS PENDENTES** | `docs/SDD-006-deploy-observabilidade.md`, `docs/SDD-006-DESIGN-deploy-observabilidade.md`, `docs/SDD-006-DOD-review.md`, `docs/runbooks/**`, `backend/scripts/bootstrap-admin.ts`, `backend/src/infra/static-frontend.ts`, `backend/public/**`, Railway `https://almoxarif-production.up.railway.app`, `/` 200 HTML, `/health/ready` 200 com `database=connected`, logs reais sem secrets, backup manual com restore testado |
 
 ### Riscos da §6 já mitigados pelo SDD-001+FIX
 
@@ -480,7 +480,8 @@ Base operacional ja validada:
 - Decisao frontend/API-only fechada: publicar frontend estatico no mesmo dominio do backend Railway, usando `backend/public/**` servido por Fastify.
 - Frontend estatico validado no Railway em 2026-04-29: `GET /` 200 HTML, `/apiClient.js` 200, `/front/css/variables.css` 200.
 - Logs reais validados no Railway em 2026-04-29: 300 linhas app/deploy + 200 linhas HTTP auditadas, sem ocorrencias nos padroes sensiveis do SDD-006.
-- Pendente para fechamento total: confirmacao de backup e registro final de riscos residuais.
+- Backup manual aplicado em 2026-04-29 porque backup gerenciado nao foi confirmavel via CLI: dump fora do repo, SHA-256 registrado, `pg_restore --list` PASS e restore PASS em Docker PostgreSQL 18 temporario.
+- Pendente para fechamento total: registro final de riscos residuais.
 
 ---
 
