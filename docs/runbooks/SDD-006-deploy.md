@@ -16,7 +16,7 @@ Executar deploy controlado do Almox no Railway, em ambiente real ou staging prod
 
 - Alvo inicial: Railway Node service + PostgreSQL gerenciado.
 - Backend: `backend/`, configurado como Root Directory do servico Railway.
-- Frontend: arquivos estaticos do repositorio, sem build step obrigatorio.
+- Frontend: publicado pelo proprio backend no mesmo dominio, a partir de `backend/public/**`, sem build step obrigatorio.
 - `NODE_ENV=production` no ambiente real.
 - Banco produtivo usa PostgreSQL via `DATABASE_URL`.
 - Migrations produtivas usam `prisma migrate deploy`.
@@ -38,7 +38,7 @@ npm run test:frontend
 
 Resultado esperado:
 
-- Backend: `49 passed`, `236 passed`.
+- Backend: `50 passed`, `242 passed`.
 - Frontend: `1 passed`, `62 passed`.
 - TypeScript sem erro.
 
@@ -101,6 +101,7 @@ Observacoes Railway:
 - Healthcheck usa o `PORT` do servico.
 - Healthcheck do Railway e usado no momento do deploy para promover a nova versao; nao substitui monitoramento continuo.
 - Para monorepo isolado, o Root Directory faz build/start operarem dentro de `backend/`.
+- Como o Root Directory do Railway e `/backend`, o frontend estatico precisa estar sincronizado em `backend/public/**`. A fonte visual continua sendo o frontend legado do repo (`index.html`, `apiClient.js`, `front/**`); `backend/public/**` e o artefato operacional empacotado no deploy.
 
 ---
 
@@ -180,9 +181,19 @@ curl -i https://<dominio-railway>/health
 
 Resultado esperado: mesmo contrato de readiness.
 
-15. Se ainda nao existir admin ativo no banco produtivo, executar bootstrap controlado de admin.
-16. Executar smoke login com usuario controlado.
-17. Verificar logs do Railway.
+15. Validar frontend estatico:
+
+```bash
+curl -i https://<dominio-railway>/
+curl -i https://<dominio-railway>/apiClient.js
+curl -i https://<dominio-railway>/front/css/variables.css
+```
+
+Resultado esperado: raiz HTTP 200 com HTML do MVP; `apiClient.js` e CSS HTTP 200 no mesmo dominio; a API continua em `/api/v1`.
+
+16. Se ainda nao existir admin ativo no banco produtivo, executar bootstrap controlado de admin.
+17. Executar smoke login com usuario controlado.
+18. Verificar logs do Railway.
 
 ---
 

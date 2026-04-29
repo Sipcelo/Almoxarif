@@ -20,17 +20,17 @@
 ## Resultado Geral
 
 ```
-Test Files  49 passed (49)
-     Tests  236 passed (236)
+Test Files  50 passed (50)
+     Tests  242 passed (242)
 ```
 
 | Métrica | Valor |
 |---------|-------|
-| Arquivos de teste | 49 |
-| Arquivos passando | 49 |
+| Arquivos de teste | 50 |
+| Arquivos passando | 50 |
 | Arquivos falhando | 0 |
-| Testes totais | 236 |
-| Testes passando | 236 |
+| Testes totais | 242 |
+| Testes passando | 242 |
 | Testes falhando | 0 |
 | Testes `skip`/`todo` | 0 |
 
@@ -48,6 +48,7 @@ Test Files  49 passed (49)
 > **Atualização 2026-04-28 (SDD-006 bootstrap admin):** +1 arquivo (`bootstrap-admin.test.ts`), 4 testes. Total 232 → 236 em 49 arquivos. Script `backend/scripts/bootstrap-admin.ts` definido para bootstrap controlado de primeiro admin com confirmação explícita, no-op quando já existe admin ativo e AuditLog `ADMIN_BOOTSTRAPPED`.
 > **Atualização 2026-04-29 (SDD-006 bootstrap produção):** bootstrap controlado executado contra PostgreSQL de produção via Railway CLI e `DATABASE_PUBLIC_URL`; resultado `action=created` para `admin@rodoviariapel.com`. Variáveis temporárias `BOOTSTRAP_*` removidas após execução.
 > **Atualização 2026-04-29 (SDD-006 smoke autenticado/API):** smoke autenticado passou na API real do Railway com `admin@rodoviariapel.com`: login 200, `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida. Raiz do domínio segue backend-only e retorna `NOT_FOUND`, sem frontend estático publicado.
+> **Atualizacao 2026-04-29 (SDD-006 frontend estatico):** decisao operacional fechada como publicacao do frontend estatico no mesmo dominio do backend Railway. Adicionado `backend/src/infra/static-frontend.ts`, artefato `backend/public/**` e `static-frontend.test.ts` com 6 testes. Total 236 -> 242 em 50 arquivos.
 Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via `auth-hardening.test.ts` e `infra-failure.test.ts` (11/11 PASS).
 
 ---
@@ -257,7 +258,7 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 
 ## Bloco M — SDD-006 (Deploy + Observabilidade)
 
-> Adicionado em 2026-04-26 após implementação parcial validada do SDD-006. Cobre contratos de ambiente produtivo, health/readiness, security headers, cookies de produção, logging/redact, graceful shutdown e bootstrap controlado de primeiro admin.
+> Adicionado em 2026-04-26 após implementação parcial validada do SDD-006. Cobre contratos de ambiente produtivo, health/readiness, security headers, cookies de produção, logging/redact, graceful shutdown, bootstrap controlado de primeiro admin e frontend estatico em mesmo dominio.
 
 | # | Arquivo | Testes | Cobertura |
 |---|---------|--------|-----------|
@@ -268,7 +269,8 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | 47 | `logging-production.test.ts` | 2 | Redact de cookie/authorization/senhas e erro de env sem imprimir secrets |
 | 48 | `graceful-shutdown.test.ts` | 2 | Encerramento limpo com desconexão do banco e idempotência do shutdown |
 | 49 | `bootstrap-admin.test.ts` | 4 | Bootstrap controlado de primeiro admin, senha hasheada, audit log, promoção de usuário existente e no-op quando já existe admin ativo |
-| **SUBTOTAL SDD-006** | **7 arquivos** | **23** | — |
+| 50 | `static-frontend.test.ts` | 6 | Raiz `/` serve o shell do MVP, `/apiClient.js` e `/front/*` no mesmo dominio, CSP separada para frontend/API e bloqueio de acesso fora de `public` |
+| **SUBTOTAL SDD-006** | **8 arquivos** | **29** | — |
 
 ### Validações complementares SDD-006
 
@@ -282,13 +284,14 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | Bootstrap admin local | PASS | `backend/scripts/bootstrap-admin.ts`, `backend/test/bootstrap-admin.test.ts`; `npm run bootstrap:admin`/`npm run bootstrap:admin:dist` disponíveis |
 | Bootstrap admin produção | PASS | Railway CLI executou `npm --prefix backend run bootstrap:admin` contra `DATABASE_PUBLIC_URL`; resultado `action=created`, email `admin@rodoviariapel.com`; variáveis `BOOTSTRAP_*` removidas |
 | Smoke Railway - autenticado/API | PASS | Login admin 200; `/api/v1/auth/me`, `/api/v1/items` e `/api/v1/reports/estoque` responderam com sessão válida |
-| Smoke Railway - frontend estatico | PENDENTE | Raiz `https://almoxarif-production.up.railway.app/` retorna `NOT_FOUND`; serviço atual expõe apenas backend/API |
+| Frontend estatico local | PASS | `backend/public/**`, `backend/src/infra/static-frontend.ts` e `static-frontend.test.ts`; raiz `/` serve HTML, assets estaticos e CSP de frontend |
+| Smoke Railway - frontend estatico | PENDENTE POS-DEPLOY | Implementacao pronta para o proximo deploy Railway; validar que `https://almoxarif-production.up.railway.app/` retorna HTML em vez de `NOT_FOUND` |
 
 ---
 
 ## Inventário canônico de testes (fonte da verdade)
 
-> **Esta lista é a referência oficial.** Qualquer regressão futura deve passar por toda ela antes de avançar em qualquer SDD. Total: **236 testes em 49 arquivos**.
+> **Esta lista é a referência oficial.** Qualquer regressão futura deve passar por toda ela antes de avançar em qualquer SDD. Total: **242 testes em 50 arquivos**.
 
 | # | Arquivo | Testes | SDD |
 |---|---------|--------|-----|
@@ -341,7 +344,8 @@ Atualização 2026-04-18: CA-A4, CA-I2 e CA-I3 foram cobertos explicitamente via
 | 47 | `logging-production.test.ts` | 2 | SDD-006 |
 | 48 | `graceful-shutdown.test.ts` | 2 | SDD-006 |
 | 49 | `bootstrap-admin.test.ts` | 4 | SDD-006 |
-| **TOTAL** | **49 arquivos** | **236** | — |
+| 50 | `static-frontend.test.ts` | 6 | SDD-006 |
+| **TOTAL** | **50 arquivos** | **242** | — |
 
 ### Comando canônico de execução
 
@@ -350,11 +354,11 @@ cd backend
 npm test
 ```
 
-**Resultado esperado** (baseline 2026-04-28, pós bootstrap admin SDD-006):
+**Resultado esperado** (baseline 2026-04-29, pos frontend estatico SDD-006):
 ```
-Test Files  49 passed (49)
-     Tests  236 passed (236)
-  Duration  ~46.41s
+Test Files  50 passed (50)
+     Tests  242 passed (242)
+  Duration  ~47.40s
 ```
 
 Validações complementares:
@@ -374,7 +378,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 ### Critério de regressão
 
 - ✅ Toda nova SDD **soma** testes a este inventário, nunca remove.
-- ✅ Nenhum SDD pode ser fechado enquanto **qualquer** dos 236 testes atuais falhar.
+- ✅ Nenhum SDD pode ser fechado enquanto **qualquer** dos 242 testes atuais falhar.
 - ✅ Qualquer mudança de contrato que quebre um teste exige **micro-SPEC aprovada** antes (como fizemos com paginação).
 - ❌ Teste `skip` ou `todo` é proibido — se algo não pode ser testado agora, registrar como débito explícito em "Riscos Residuais" ou "Débitos Técnicos".
 
@@ -473,6 +477,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | CA-S3 | Login em produção emite cookies com `Secure` | `production-cookies.test.ts` | PASS |
 | CA-S4 | Logs não expõem cookie, authorization e senhas | `logging-production.test.ts` | PASS |
 | CA-S5 | Erro interno segue response padronizado e sem stack trace ao usuário | Cobertura herdada de `error-format.test.ts` e `infra-failure.test.ts` | PASS |
+| CA-S6 | Frontend estatico usa CSP compativel com legado e API mantem CSP restritiva | `static-frontend.test.ts`, `security-headers.test.ts` | PASS |
 
 ### Banco/deploy
 
@@ -488,7 +493,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 
 | CA | Descrição | Evidência | Status |
 |----|-----------|-----------|--------|
-| CA-T1 | `npm test` em `backend/` passa | 49 arquivos / 236 testes PASS | PASS |
+| CA-T1 | `npm test` em `backend/` passa | 50 arquivos / 242 testes PASS | PASS |
 | CA-T2 | `npm run build` em `backend/` passa | `tsc` sem erro | PASS |
 | CA-T3 | `PROGRESS.md` e runbooks refletem estado real | `docs/PROGRESS.md`, `docs/runbooks/*` | PASS |
 
@@ -504,7 +509,7 @@ frontend: Test Files 1 passed (1), Tests 62 passed (62)
 | R4 | Cenários de boot dependem de env isolado | BAIXO | Rodar com `DATABASE_URL` de teste e validar `validateEnv/buildApp` |
 | R5 | Rate-limit por IP; em localhost todos os testes compartilham IP | BAIXO | Mitigado via `LOGIN_RATE_LIMIT_MAX` alto em `.env.test` |
 | R6 | Sem job de limpeza de sessões expiradas | BAIXO | Registrado em SDD-001 §7 R1; pendência para módulo posterior |
-| R7 | Frontend estatico ainda nao publicado no dominio Railway | MÉDIO | API real passou; raiz do domínio retorna `NOT_FOUND` porque o serviço atual expõe apenas backend/API |
+| R7 | Frontend estatico implementado localmente ainda precisa validar no dominio Railway apos deploy | BAIXO | Publicacao em mesmo dominio foi implementada via `backend/public/**`; falta smoke real da raiz apos novo deploy |
 | R8 | CA-D3 não teve falha proposital simulada em produção | BAIXO | Pre-deploy real de sucesso validado; falha de migration fica coberta por runbook e comportamento do Railway |
 | R9 | Senha temporária do admin precisa de política operacional após smoke | MÉDIO | Login real passou; manter ou rotacionar a senha temporária depende da política operacional de credenciais iniciais |
 | R10 | Backup gerenciado/manual ainda não confirmado no Railway | ALTO | Confirmar plano/recurso de backup ou executar runbook manual antes de considerar SDD-006 concluído |
@@ -530,15 +535,15 @@ Regras vigentes:
 
 ## Conclusão
 
-O baseline acumulado até a implementação parcial do SDD-006 está validado com **49 arquivos backend / 236 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
+O baseline acumulado até a implementação parcial do SDD-006 está validado com **50 arquivos backend / 242 testes passando**, além de **62 testes frontend** em `apiClient` e build TypeScript do backend sem erro.
 
-O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact, graceful shutdown e bootstrap controlado de primeiro admin. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo e no Railway.
+O SDD-006 adicionou cobertura para env produtiva, health live/ready, security headers, cookies `Secure` em produção, logging/redact, graceful shutdown, bootstrap controlado de primeiro admin e frontend estatico em mesmo dominio. A baseline migration também foi validada com `prisma migrate deploy` em PostgreSQL temporário limpo e no Railway.
 
 **Definition of Done técnico automatizado do recorte SDD-006 parcial: atingido. Smoke real de health no Railway: atingido.**
 
-**Pendências para fechamento total do SDD-006:** definição/publicação do frontend estático ou decisão formal de API-only neste recorte, validação de logs reais sem secrets, confirmação de backup e registro final de riscos residuais.
+**Pendencias para fechamento total do SDD-006:** validar o frontend estatico no dominio Railway apos deploy, validar logs reais sem secrets, confirmar backup e registrar riscos residuais finais.
 
-**Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 236 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
+**Este documento é a fonte da verdade dos testes.** Todo avanço futuro só acontece com os 242 testes backend atuais + 62 testes frontend passando, somando novos testes quando houver novo escopo aprovado.
 
 
 

@@ -18,6 +18,7 @@ import { reportsRoutes } from "../modules/reports/reports.routes";
 import { auditRoutes } from "../modules/audit/audit.routes";
 import { healthRoutes } from "../infra/healthcheck";
 import { securityHeaders } from "../infra/security-headers";
+import { registerStaticFrontend } from "../infra/static-frontend";
 import { registerShutdown } from "../infra/shutdown";
 import { loggerOptions } from "../infra/logger-options";
 import { errorHandler, notFoundHandler } from "../infra/error-handler";
@@ -94,6 +95,7 @@ export async function buildApp() {
     },
     { prefix: "/api/v1" }
   );
+  await registerStaticFrontend(app);
 
   return app;
 }
