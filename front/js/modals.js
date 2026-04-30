@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   Almox â€” Modals v4
+   Almox — Modals v4
    ============================================================ */
 
 const Modals = {  // ---- ITEM ----
@@ -487,7 +487,7 @@ const Modals = {  // ---- ITEM ----
     if(!nome){ Utils.notify('Informe o nome','error'); return; }
     const ac={ id:Store.nextId(Store.getAcessos()), nome, tipo:document.getElementById('m-ac-tipo').value, hora:document.getElementById('m-ac-hora').value, data:document.getElementById('m-ac-data').value, cargo:document.getElementById('m-ac-cargo').value.trim() };
     Store.setAcessos([ac,...Store.getAcessos()]);
-    App.addActivity(`<strong>${ac.nome}</strong>: ${ac.tipo} â€” ${ac.hora}`,ac.tipo==='Entrada'?'green':'red');
+    App.addActivity(`<strong>${ac.nome}</strong>: ${ac.tipo} — ${ac.hora}`,ac.tipo==='Entrada'?'green':'red');
     Utils.closeModal('modal-acesso'); App.refreshCurrentPage();
     Utils.notify('Acesso registrado!');
   },

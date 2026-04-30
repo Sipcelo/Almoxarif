@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   Almox â€” Pages v4
+   Almox — Pages v4
    ============================================================ */
 
 // ---- ESTOQUE ----
@@ -84,7 +84,7 @@ const PageEstoque = {
       const statusF=document.getElementById('flt-status')?.value||'';
       const cs=document.getElementById('flt-cat'),ds=document.getElementById('flt-dep');
       if(cs){const v=cs.value;cs.innerHTML='<option value="">Todas categorias</option>'+categorias.map(c=>`<option value="${c}"${c===v?' selected':''}>${c}</option>`).join('');}
-      if(ds){const v=ds.value;ds.innerHTML='<option value="">Todos depÃ³sitos</option>'+depositos.map(d=>`<option value="${d}"${d===v?' selected':''}>${d}</option>`).join('');}
+      if(ds){const v=ds.value;ds.innerHTML='<option value="">Todos depósitos</option>'+depositos.map(d=>`<option value="${d}"${d===v?' selected':''}>${d}</option>`).join('');}
       let list=items.filter(i=>{
         const matchQ=!q||i.descricao.toLowerCase().includes(q)||i.categoria.toLowerCase().includes(q)||(i.codigo||'').toLowerCase().includes(q);
         const matchCat=!catF||i.categoria===catF;
@@ -100,22 +100,22 @@ const PageEstoque = {
       const canEdit=Auth.isAdmin()||Auth.currentUser?.role==='gerente';
       tableEl.innerHTML=list.length===0?Utils.emptyState('Nenhum item encontrado','Tente alterar os filtros.'):`
       <table><thead><tr>
-        <th>CÃ³d.</th><th>DescriÃ§Ã£o</th><th>Categoria</th><th>DepÃ³sito</th>
+        <th>Cód.</th><th>Descrição</th><th>Categoria</th><th>Depósito</th>
         <th style="text-align:center;cursor:pointer" onclick="PageEstoque.toggleSort()" title="Ordenar por quantidade">
           Qtd. <span style="font-size:11px;color:var(--brand)">${this._sortDir==='desc'?'v':'^'}</span>
         </th>
-        <th style="text-align:center">MÃ­n.</th>
+        <th style="text-align:center">Mín.</th>
         <th style="text-align:right">Valor Unit.</th>
         <th style="text-align:center">Status</th>
-        ${canEdit?'<th>AÃ§Ãµes</th>':''}
+        ${canEdit?'<th>Ações</th>':''}
       </tr></thead><tbody>
       ${list.map(i=>{
         const idArg = this._onclickId(i.id);
         const semEstoque=i.quantidade===0,baixo=i.quantidade>0&&i.quantidade<i.minimo;
         const statusBadge=semEstoque?`<span class="badge badge-red">Sem estoque</span>`:baixo?`<span class="badge badge-orange">Baixo</span>`:`<span class="badge badge-green">Ok</span>`;
         return `<tr>
-          <td><span style="font-size:12px;font-family:var(--mono);color:var(--brand);font-weight:500">${i.codigo||'â€”'}</span></td>
-          <td><div class="tbl-item">${Utils.itemIcon()}<div><div class="tbl-name">${i.descricao}</div><div class="tbl-sub">${i.obs||'â€”'}</div></div></div></td>
+          <td><span style="font-size:12px;font-family:var(--mono);color:var(--brand);font-weight:500">${i.codigo||'—'}</span></td>
+          <td><div class="tbl-item">${Utils.itemIcon()}<div><div class="tbl-name">${i.descricao}</div><div class="tbl-sub">${i.obs||'—'}</div></div></div></td>
           <td><span class="badge badge-blue">${i.categoria}</span></td>
           <td><span style="font-size:12.5px;color:var(--text-2)">${i.deposito}</span></td>
           <td style="text-align:center">${Utils.qtyBadge(i.quantidade,i.minimo)}</td>
@@ -124,7 +124,7 @@ const PageEstoque = {
           <td style="text-align:center">${statusBadge}</td>
           ${canEdit?`<td><div class="tbl-actions">
             <button class="btn-icon" title="Entrada" onclick='Modals.openEntradaFor(${idArg})'><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
-            <button class="btn-icon" title="SaÃ­da"   onclick='Modals.openSaidaFor(${idArg})'><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            <button class="btn-icon" title="Saída"   onclick='Modals.openSaidaFor(${idArg})'><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
             <button class="btn-icon" title="Editar"  onclick='Modals.editItem(${idArg})'><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
             ${Auth.isAdmin()?`<button class="btn-icon danger" title="Excluir" onclick='Modals.deleteItem(${idArg})'><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}
           </div></td>`:''}
@@ -248,7 +248,7 @@ const PageEntradas = {
   }
 };
 
-// ---- SAÃDAS ----
+// ---- SAÍDAS ----
 const PageSaidas = {
   _renderToken: 0,
 
@@ -355,13 +355,13 @@ const PageAcesso = {
   render(filter=''){
     const list = this.fetchAll(filter);
     document.getElementById('ac-table').innerHTML=list.length===0?Utils.emptyState('Nenhum acesso registrado'):`
-      <table><thead><tr><th>Pessoa</th><th>Tipo</th><th>HorÃ¡rio</th><th>Data</th><th>Cargo</th></tr></thead>
+      <table><thead><tr><th>Pessoa</th><th>Tipo</th><th>Horário</th><th>Data</th><th>Cargo</th></tr></thead>
       <tbody>${list.map(a=>`<tr>
         <td><div class="tbl-item">${Utils.avatarHtml(a.nome,'md')}<div class="tbl-name">${a.nome}</div></div></td>
         <td><span class="badge ${a.tipo==='Entrada'?'badge-green':'badge-red'} badge-dot">${a.tipo}</span></td>
         <td><span style="font-size:13px;font-weight:500;font-family:var(--mono)">${a.hora}</span></td>
         <td><span style="font-size:12.5px">${Utils.fmtDate(a.data)}</span></td>
-        <td><span style="font-size:12.5px;color:var(--text-2)">${a.cargo||'â€”'}</span></td>
+        <td><span style="font-size:12.5px;color:var(--text-2)">${a.cargo||'—'}</span></td>
       </tr>`).join('')}</tbody></table>`;
   }
 };
@@ -1136,7 +1136,7 @@ const PageConfig = {
     }
   },
 };
-// ---- IMPRESSÃƒO ----
+// ---- IMPRESSÃO ----
 const Impressao = {
   _janela(html){const w=window.open('','_blank','width=800,height=700');w.document.write(html);w.document.close();w.onload=()=>{w.focus();w.print();};},
 
@@ -1231,7 +1231,7 @@ const Impressao = {
     if(termica){
       this._janela(this._base('Acesso',`<h2>CONTROLE DE ACESSO</h2><table><tr><th>Nome</th><th>T</th><th>Hora</th></tr>${lista.map(a=>`<tr><td>${a.nome.substring(0,14)}</td><td>${a.tipo==='Entrada'?'E':'S'}</td><td>${a.hora}</td></tr>`).join('')}</table>`,true));
     } else {
-      this._janela(this._base('Acesso',`<h2>Controle de Acesso</h2><div class="sub">${now}</div><table><tr><th>Nome</th><th>Tipo</th><th>Hora</th><th>Data</th><th>Cargo</th></tr>${lista.map(a=>`<tr><td>${a.nome}</td><td><span class="${a.tipo==='Entrada'?'badge-in':'badge-out'}">${a.tipo}</span></td><td>${a.hora}</td><td>${Utils.fmtDate(a.data)}</td><td>${a.cargo||'â€”'}</td></tr>`).join('')}</table>`,false));
+      this._janela(this._base('Acesso',`<h2>Controle de Acesso</h2><div class="sub">${now}</div><table><tr><th>Nome</th><th>Tipo</th><th>Hora</th><th>Data</th><th>Cargo</th></tr>${lista.map(a=>`<tr><td>${a.nome}</td><td><span class="${a.tipo==='Entrada'?'badge-in':'badge-out'}">${a.tipo}</span></td><td>${a.hora}</td><td>${Utils.fmtDate(a.data)}</td><td>${a.cargo||'—'}</td></tr>`).join('')}</table>`,false));
     }
   }
 };
