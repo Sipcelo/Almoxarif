@@ -42,7 +42,7 @@ export async function listItems(query: ListItemsQueryInput) {
     ];
   }
   if (query.baixoEstoque === true) {
-    andFilters.push({ quantidade: { lte: prisma.item.fields.minimo } });
+    andFilters.push({ quantidade: { lt: prisma.item.fields.minimo } });
   }
   if (andFilters.length > 0) {
     where.AND = andFilters;

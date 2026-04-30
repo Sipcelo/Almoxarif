@@ -44,6 +44,7 @@ describe("Items pagination", () => {
     const deposito = await seedDeposito("principal");
     await seedItem({ codigo: "ITM-L1", categoriaId: categoria.id, depositoId: deposito.id, quantidade: 2, minimo: 5 });
     await seedItem({ codigo: "ITM-L2", categoriaId: categoria.id, depositoId: deposito.id, quantidade: 10, minimo: 5 });
+    await seedItem({ codigo: "ITM-L3", categoriaId: categoria.id, depositoId: deposito.id, quantidade: 5, minimo: 5 });
 
     const res = await app.inject({
       method: "GET",

@@ -5,6 +5,7 @@
 const App = {
   currentPage: 'painel',
   activities: [],
+  _alertToken: 0,
 
   async init() {
     initStore();
@@ -102,6 +103,77 @@ const App = {
     if (this.activities.length > 30) this.activities.pop();
   },
 
+  _extractRows(payload, key) {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== 'object') return [];
+    const rows = payload[key];
+    return Array.isArray(rows) ? rows : [];
+  },
+
+  _extractTotalPages(payload) {
+    if (!payload || typeof payload !== 'object' || !payload.meta) return 1;
+    const raw = Number(payload.meta.totalPages);
+    if (!Number.isFinite(raw) || raw < 1) return 1;
+    return Math.floor(raw);
+  },
+
+  async _listAll(fetchPage, key, baseParams = {}) {
+    const limit = 100;
+    const first = await fetchPage({ ...baseParams, page: 1, limit });
+    const rows = this._extractRows(first, key);
+    const totalPages = this._extractTotalPages(first);
+    if (totalPages <= 1) return rows;
+
+    const chunks = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, idx) =>
+        fetchPage({ ...baseParams, page: idx + 2, limit })
+      )
+    );
+
+    const all = [...rows];
+    for (const payload of chunks) {
+      all.push(...this._extractRows(payload, key));
+    }
+    return all;
+  },
+
+  _normalizeAlertItem(raw) {
+    return {
+      id: String(raw?.id || ''),
+      codigo: raw?.codigo || '',
+      descricao: raw?.descricao || '',
+      categoria: raw?.categoria?.nome || '',
+      deposito: raw?.deposito?.nome || '',
+      quantidade: Number(raw?.quantidade || 0),
+      minimo: Number(raw?.minimo || 0),
+      ativo: raw?.ativo !== false,
+    };
+  },
+
+  async _loadStockAlerts() {
+    if (!Auth.currentUser || !window.apiClient?.items?.list) return [];
+    const rows = await this._listAll(
+      (params) => apiClient.items.list(params),
+      'items',
+      { ativo: true, baixoEstoque: true }
+    );
+
+    return rows
+      .map((row) => this._normalizeAlertItem(row))
+      .filter((item) => item.ativo !== false && item.quantidade < item.minimo);
+  },
+
+  _setAlertIndicators(count) {
+    const badge = document.getElementById('badge-estoque');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+
+    const dot = document.querySelector('.topbar-notif-dot');
+    if (dot) dot.style.display = count > 0 ? 'block' : 'none';
+
+    const cb = document.getElementById('notif-count');
+    if (cb) { cb.textContent = count; cb.style.display = count > 0 ? 'flex' : 'none'; }
+  },
+
   toggleAlertPanel() {
     const panel = document.getElementById('alert-panel');
     if (!panel.style.display || panel.style.display === 'none') {
@@ -109,10 +181,21 @@ const App = {
     } else { panel.style.display = 'none'; }
   },
 
-  renderAlertPanel() {
-    const baixo = Store.getItems().filter(i => i.quantidade < i.minimo);
+  async renderAlertPanel() {
     const list  = document.getElementById('alert-list');
     if (!list) return;
+    list.innerHTML = Utils.emptyState('Carregando alertas...');
+
+    let baixo = [];
+    try {
+      baixo = await this._loadStockAlerts();
+    } catch (err) {
+      list.innerHTML = Utils.emptyState('Falha ao carregar alertas');
+      const msg = (err && err.message) || 'Falha ao carregar alertas.';
+      Utils.notify(msg, 'error');
+      return;
+    }
+
     if (baixo.length === 0) {
       list.innerHTML = `<div style="padding:24px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">✅</div><div style="font-size:13px;font-weight:500;">Estoque em dia!</div><div style="font-size:12px;color:var(--text-3);margin-top:4px;">Nenhum item abaixo do mínimo.</div></div>`;
       return;
@@ -136,19 +219,19 @@ const App = {
     }).join('');
   },
 
-  updateBadges() {
-    const baixo = Store.getItems().filter(i => i.quantidade < i.minimo).length;
-    // Sidebar badge on Estoque menu item
-    const badge = document.getElementById('badge-estoque');
-    if (badge) { badge.textContent = baixo; badge.style.display = baixo > 0 ? 'flex' : 'none'; }
-    // Topbar dot — ONLY visible when there are alerts
-    const dot = document.querySelector('.topbar-notif-dot');
-    if (dot) dot.style.display = baixo > 0 ? 'block' : 'none';
-    // Count badge on bell icon
-    const cb = document.getElementById('notif-count');
-    if (cb) { cb.textContent = baixo; cb.style.display = baixo > 0 ? 'flex' : 'none'; }
-    // One-time session alert for zeroed items
-    const criticos = Store.getItems().filter(i=>i.quantidade===0);
+  async updateBadges() {
+    const token = ++this._alertToken;
+    let baixo = [];
+    try {
+      baixo = await this._loadStockAlerts();
+    } catch {
+      if (token === this._alertToken) this._setAlertIndicators(0);
+      return;
+    }
+    if (token !== this._alertToken) return;
+
+    this._setAlertIndicators(baixo.length);
+    const criticos = baixo.filter(i=>i.quantidade===0);
     const sk = 'almox_alerted_'+new Date().toDateString();
     if (criticos.length>0 && !sessionStorage.getItem(sk)) {
       sessionStorage.setItem(sk,'1');
