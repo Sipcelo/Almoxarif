@@ -347,18 +347,88 @@ const PageSaidas = {
 
 // ---- CONTROLE DE ACESSO ----
 const PageAcesso = {
-  fetchAll(filter=''){
-    const f=(document.getElementById('ac-search')?.value||filter).toLowerCase();
-    return Store.getAcessos().filter(a=>!f||a.nome.toLowerCase().includes(f)||(a.cargo||'').toLowerCase().includes(f));
+  _renderToken: 0,
+
+  _extractRows(payload, key) {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== 'object') return [];
+    const rows = payload[key];
+    return Array.isArray(rows) ? rows : [];
   },
 
-  render(filter=''){
-    const list = this.fetchAll(filter);
-    document.getElementById('ac-table').innerHTML=list.length===0?Utils.emptyState('Nenhum acesso registrado'):`
+  _extractTotalPages(payload) {
+    if (!payload || typeof payload !== 'object' || !payload.meta) return 1;
+    const raw = Number(payload.meta.totalPages);
+    if (!Number.isFinite(raw) || raw < 1) return 1;
+    return Math.floor(raw);
+  },
+
+  async _listAll(fetchPage, key, baseParams = {}) {
+    const limit = 100;
+    const first = await fetchPage({ ...baseParams, page: 1, limit });
+    const rows = this._extractRows(first, key);
+    const totalPages = this._extractTotalPages(first);
+    if (totalPages <= 1) return rows;
+
+    const chunks = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, idx) =>
+        fetchPage({ ...baseParams, page: idx + 2, limit })
+      )
+    );
+
+    const all = [...rows];
+    for (const payload of chunks) {
+      all.push(...this._extractRows(payload, key));
+    }
+    return all;
+  },
+
+  _normalizeAcesso(raw) {
+    const tipo = raw?.tipo === 'Saída' ? 'Saida' : (raw?.tipo || '');
+    return {
+      id: String(raw?.id || ''),
+      nome: raw?.nome || '',
+      tipo,
+      tipoLabel: tipo === 'Saida' ? 'Saída' : tipo,
+      hora: raw?.hora || '',
+      data: raw?.data ? String(raw.data).slice(0, 10) : '',
+      cargo: raw?.cargo || '',
+    };
+  },
+
+  async fetchAll(filter=''){
+    const f=(document.getElementById('ac-search')?.value||filter).trim();
+    const rows = await this._listAll(
+      (params) => apiClient.acessos.list(params),
+      'acessos',
+      f ? { q: f } : {}
+    );
+    return rows.map((row) => this._normalizeAcesso(row));
+  },
+
+  async render(filter=''){
+    const token = ++this._renderToken;
+    const tableEl = document.getElementById('ac-table');
+    if (!tableEl) return;
+    tableEl.innerHTML = Utils.emptyState('Carregando acessos...');
+
+    let list = [];
+    try {
+      list = await this.fetchAll(filter);
+    } catch (err) {
+      if (token !== this._renderToken) return;
+      tableEl.innerHTML = Utils.emptyState('Falha ao carregar acessos');
+      const msg = (err && err.message) || 'Falha ao carregar acessos.';
+      Utils.notify(msg, 'error');
+      return;
+    }
+    if (token !== this._renderToken) return;
+
+    tableEl.innerHTML=list.length===0?Utils.emptyState('Nenhum acesso registrado'):`
       <table><thead><tr><th>Pessoa</th><th>Tipo</th><th>Horário</th><th>Data</th><th>Cargo</th></tr></thead>
       <tbody>${list.map(a=>`<tr>
         <td><div class="tbl-item">${Utils.avatarHtml(a.nome,'md')}<div class="tbl-name">${a.nome}</div></div></td>
-        <td><span class="badge ${a.tipo==='Entrada'?'badge-green':'badge-red'} badge-dot">${a.tipo}</span></td>
+        <td><span class="badge ${a.tipo==='Entrada'?'badge-green':'badge-red'} badge-dot">${a.tipoLabel}</span></td>
         <td><span style="font-size:13px;font-weight:500;font-family:var(--mono)">${a.hora}</span></td>
         <td><span style="font-size:12.5px">${Utils.fmtDate(a.data)}</span></td>
         <td><span style="font-size:12.5px;color:var(--text-2)">${a.cargo||'—'}</span></td>
@@ -1226,12 +1296,12 @@ const Impressao = {
     this._janela(this._base(`Relatorio ${setor}`,`<h2>Relatorio por Setor: ${setor}</h2><div class="sub">Emitido em ${now} · ${saidas.length} retiradas · Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><table><tr><th>Data</th><th>Cod.</th><th>Item</th><th>Qtd.</th><th>Unit.</th><th>Total</th><th>Funcionario</th></tr>${linhas}</table>`,false));
   },
 
-  acessos(termica=false){
-    const lista=Store.getAcessos(),now=new Date().toLocaleString('pt-BR');
+  async acessos(termica=false){
+    const lista=await PageAcesso.fetchAll(),now=new Date().toLocaleString('pt-BR');
     if(termica){
       this._janela(this._base('Acesso',`<h2>CONTROLE DE ACESSO</h2><table><tr><th>Nome</th><th>T</th><th>Hora</th></tr>${lista.map(a=>`<tr><td>${a.nome.substring(0,14)}</td><td>${a.tipo==='Entrada'?'E':'S'}</td><td>${a.hora}</td></tr>`).join('')}</table>`,true));
     } else {
-      this._janela(this._base('Acesso',`<h2>Controle de Acesso</h2><div class="sub">${now}</div><table><tr><th>Nome</th><th>Tipo</th><th>Hora</th><th>Data</th><th>Cargo</th></tr>${lista.map(a=>`<tr><td>${a.nome}</td><td><span class="${a.tipo==='Entrada'?'badge-in':'badge-out'}">${a.tipo}</span></td><td>${a.hora}</td><td>${Utils.fmtDate(a.data)}</td><td>${a.cargo||'—'}</td></tr>`).join('')}</table>`,false));
+      this._janela(this._base('Acesso',`<h2>Controle de Acesso</h2><div class="sub">${now}</div><table><tr><th>Nome</th><th>Tipo</th><th>Hora</th><th>Data</th><th>Cargo</th></tr>${lista.map(a=>`<tr><td>${a.nome}</td><td><span class="${a.tipo==='Entrada'?'badge-in':'badge-out'}">${a.tipoLabel}</span></td><td>${a.hora}</td><td>${Utils.fmtDate(a.data)}</td><td>${a.cargo||'—'}</td></tr>`).join('')}</table>`,false));
     }
   }
 };

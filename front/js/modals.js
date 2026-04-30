@@ -482,14 +482,28 @@ const Modals = {  // ---- ITEM ----
     Utils.openModal('modal-acesso');
   },
 
-  saveAcesso(){
+  async saveAcesso(){
     const nome=document.getElementById('m-ac-nome').value.trim();
     if(!nome){ Utils.notify('Informe o nome','error'); return; }
-    const ac={ id:Store.nextId(Store.getAcessos()), nome, tipo:document.getElementById('m-ac-tipo').value, hora:document.getElementById('m-ac-hora').value, data:document.getElementById('m-ac-data').value, cargo:document.getElementById('m-ac-cargo').value.trim() };
-    Store.setAcessos([ac,...Store.getAcessos()]);
-    App.addActivity(`<strong>${ac.nome}</strong>: ${ac.tipo} — ${ac.hora}`,ac.tipo==='Entrada'?'green':'red');
-    Utils.closeModal('modal-acesso'); App.refreshCurrentPage();
-    Utils.notify('Acesso registrado!');
+    const tipoRaw=document.getElementById('m-ac-tipo').value;
+    const payload={
+      nome,
+      tipo: tipoRaw==='Saída'?'Saida':tipoRaw,
+      hora:document.getElementById('m-ac-hora').value,
+      data:document.getElementById('m-ac-data').value,
+      cargo:document.getElementById('m-ac-cargo').value.trim() || null
+    };
+    try {
+      const res = await apiClient.acessos.create(payload);
+      const ac = res?.acesso || payload;
+      const tipoLabel = ac.tipo === 'Saida' ? 'Saída' : ac.tipo;
+      App.addActivity(`<strong>${ac.nome}</strong>: ${tipoLabel} — ${ac.hora}`,ac.tipo==='Entrada'?'green':'red');
+      Utils.closeModal('modal-acesso'); App.refreshCurrentPage();
+      Utils.notify('Acesso registrado!');
+    } catch (err) {
+      const msg = (err && err.message) || 'Falha ao registrar acesso.';
+      Utils.notify(msg, 'error');
+    }
   },
 
   // ---- FUNCIONARIO ----

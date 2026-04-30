@@ -147,7 +147,7 @@ const Utils = {
           listAll((params) => apiClient.setores.list(params), "setores"),
         ]);
 
-      const acessos = PageAcesso.fetchAll();
+      const acessos = await PageAcesso.fetchAll();
       const data = {
         users: usersRaw.map((u) => ({
           id: u.id,
