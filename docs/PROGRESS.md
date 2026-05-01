@@ -1,6 +1,6 @@
 ﻿# Progresso do Projeto — Almox
 
-> **Última atualização:** 2026-04-29 (teste UI de entrada em massa)
+> **Última atualização:** 2026-05-01 (remocao do Controle de Acesso do escopo final)
 > **Responsável técnico:** Auralynne / Rodoviária de Pelotas
 > **Documento de referência:** [CLAUDE.md](../CLAUDE.md), [RELATORIO-TESTES-SPEC-001.md](./RELATORIO-TESTES-SPEC-001.md)
 
@@ -12,11 +12,11 @@
 |---------|-------|
 | SDDs concluídos | **6 de 6** (SDD-001 a SDD-006; SDD-001-FIX concluido como adendo) |
 | SDDs pendentes | 0 |
-| Testes totais | **304/304 passando** (242 backend + 62 frontend apiClient) |
-| E2E UI Playwright | **11/11 passando** |
-| Arquivos de teste | 51 canônicos (50 backend + 1 frontend) + 10 specs E2E UI |
+| Testes totais | **299/299 passando** (237 backend + 62 frontend apiClient) |
+| E2E UI Playwright | **12/12 passando** |
+| Arquivos de teste | 50 canônicos (49 backend + 1 frontend) + 10 specs E2E UI |
 | Testes `skip`/`todo` | 0 |
-| Tempo de execucao da suite | ~49s (backend 47.40s + frontend 1.33s) |
+| Tempo de execucao da suite | ~84.1s (backend 44.95s + frontend 0.88s + E2E 38.3s) |
 | TypeScript `tsc --noEmit` | ✅ limpo |
 | Débitos técnicos de código | **ZERO** |
 | Débitos de feature gap | **1 gap de produto aberto**: entrada em massa por nota/lote exige SPEC propria |
@@ -64,7 +64,6 @@ backend/src/modules/
 ├── funcionarios/      ✅ SDD-002 — CRUD, guards (setor usable), paginação, audit
 ├── inventory/         ✅ SDD-003 — items CRUD, regras de saldo, paginação, auditoria
 ├── stock-movements/   ✅ SDD-003 — entradas, saídas, ajustes, transações e concorrência
-├── acessos/           ✅ SDD-004 Addendum A — controle de acessos fisicos
 ├── reports/           ✅ SDD-005 — métricas, movimentações, por setor, snapshot de estoque
 ├── audit/             ✅ SDD-005 — consulta paginada e filtrada de AuditLog
 └── settings/
@@ -106,8 +105,6 @@ backend/src/modules/
 | POST | `/api/v1/settings/depositos` | cookie | admin | depositos |
 | PUT | `/api/v1/settings/depositos/:id` | cookie | admin | depositos |
 | DELETE | `/api/v1/settings/depositos/:id` | cookie | admin | depositos |
-| GET | `/api/v1/acessos` | cookie | admin | acessos |
-| POST | `/api/v1/acessos` | cookie | admin | acessos |
 | GET | `/api/v1/reports/metricas` | cookie | qualquer | reports |
 | GET | `/api/v1/reports/movimentacoes` | cookie | qualquer | reports |
 | GET | `/api/v1/reports/por-setor` | cookie | qualquer | reports |
@@ -117,7 +114,7 @@ backend/src/modules/
 | GET | `/health/ready` | público | — | infra |
 | GET | `/health` | público | — | infra |
 
-**Total:** 53 endpoints ativos.
+**Total:** 51 endpoints ativos.
 
 ### 3.4 Modelo de dados (Prisma)
 
@@ -235,13 +232,12 @@ As entidades de negocio nao usam mais `localStorage` como fonte de verdade. A ex
 | H — SDD-003 | `items-*`, `entradas`, `saidas`, `ajustes`, `stock-*` (9 arquivos) | 27 |
 | Reconciliação 2026-04-18 | `session-hardening` 7 → 8 + ajuste de soma em Bloco G | +2 |
 | I — SDD-004 PR-1 (CSRF) | `csrf.test.ts` | 8 |
-| J — SDD-004 Addendum A | `acessos.test.ts` | 5 |
 | K — SDD-004 PR-9 (import legacy) | `import-legacy.test.ts` | 5 |
 | L — SDD-005 Reports + Audit | `reports.test.ts`, `audit-query.test.ts` | 33 |
 | M — SDD-006 Deploy + Observabilidade | `production-env`, `health-readiness`, `security-headers`, `production-cookies`, `logging-production`, `graceful-shutdown`, `bootstrap-admin`, `static-frontend` (8 arquivos) | 29 |
-| **TOTAL BACKEND** | **50 arquivos** | **242** |
+| **TOTAL BACKEND** | **49 arquivos** | **237** |
 | Frontend apiClient | `test-frontend/apiClient.test.ts` | 62 |
-| **TOTAL GERAL** | **51 arquivos** | **304** |
+| **TOTAL GERAL** | **50 arquivos** | **299** |
 
 ### Comando canônico
 
@@ -250,7 +246,7 @@ cd backend
 npm test
 ```
 
-**Resultado esperado:** `Test Files 50 passed (50) | Tests 242 passed (242)`.
+**Resultado esperado:** `Test Files 49 passed (49) | Tests 237 passed (237)`.
 
 Frontend:
 
@@ -350,7 +346,8 @@ Definir se EM-001 vira novo SDD. O teste de usabilidade confirmou que a UI atual
 | 2026-04-29 | Logs reais do Railway validados sem secrets: 300 linhas app/deploy e 200 linhas HTTP auditadas, sem ocorrencias de variaveis sensiveis, URLs de conexao, cookies, authorization, Bearer, hashes bcrypt ou campos de senha. |
 | 2026-04-29 | Backup manual aplicado porque backup gerenciado nao foi confirmavel via CLI. Dump fora do repo em `D:\monetizando\almox-backups\SDD-006`, SHA-256 registrado, `pg_restore --list` PASS e restore testado em PostgreSQL 18 temporario no Docker; container removido apos validacao. |
 | 2026-04-29 | Riscos residuais finais do SDD-006 registrados e aceitos; SDD-006 marcado como concluido. |
-| 2026-04-29 | Teste UI de usabilidade para entrada em massa adicionado: 9 funcionarios criados pela UI, 100 itens/entradas carregados de forma autenticada, soma de quantidades/valores validada em Entradas e Estoque. Suite E2E: 11/11 PASS. Gap EM-001 aberto para entrada por nota/lote em unica acao. |
+| 2026-04-29 | Teste UI de usabilidade para entrada em massa adicionado: 9 funcionarios criados pela UI, 100 itens/entradas carregados de forma autenticada, soma de quantidades/valores validada em Entradas e Estoque. Suite E2E: 11/11 PASS antes da remocao posterior de Acessos. Gap EM-001 aberto para entrada por nota/lote em unica acao. |
+| 2026-05-01 | Decisao de escopo final: Controle de Acesso/Ponto removido porque sera atendido por sistema externo. UI, apiClient, rota backend `/api/v1/acessos`, teste backend dedicado e spec E2E dedicada foram removidos; modelo/tabela Prisma mantidos inertes para evitar migration destrutiva. Suites revalidadas: backend 237/237, frontend 62/62, E2E 12/12. |
 
 ---
 
@@ -361,7 +358,6 @@ Definir se EM-001 vira novo SDD. O teste de usabilidade confirmou que a UI atual
 - **SPEC SDD-001-FIX:** [`docs/SDD-001-FIX-correcao-desvios.md`](./SDD-001-FIX-correcao-desvios.md)
 - **SPEC SDD-001 Addendum (CA-A4/CA-I2/CA-I3):** [`docs/SDD-001-ADDENDUM-ca-a4-i2-i3.md`](./SDD-001-ADDENDUM-ca-a4-i2-i3.md)
 - **SPEC SDD-002:** [`docs/SDD-002-employees-settings.md`](./SDD-002-employees-settings.md)
-- **SPEC SDD-004 Addendum A:** [`docs/SDD-004-ADDENDUM-acessos.md`](./SDD-004-ADDENDUM-acessos.md)
 - **SPEC SDD-005:** [`docs/SDD-005-reports-audit.md`](./SDD-005-reports-audit.md)
 - **SPEC SDD-006:** [`docs/SDD-006-deploy-observabilidade.md`](./SDD-006-deploy-observabilidade.md)
 - **DESIGN SDD-006:** [`docs/SDD-006-DESIGN-deploy-observabilidade.md`](./SDD-006-DESIGN-deploy-observabilidade.md)
@@ -369,8 +365,6 @@ Definir se EM-001 vira novo SDD. O teste de usabilidade confirmou que a UI atual
 - **Relatório de testes:** [`docs/RELATORIO-TESTES-SPEC-001.md`](./RELATORIO-TESTES-SPEC-001.md)
 - **Schema Prisma:** [`backend/prisma/schema.prisma`](../backend/prisma/schema.prisma)
 - **Seed:** [`backend/prisma/seed.ts`](../backend/prisma/seed.ts)
-
-
 
 
 

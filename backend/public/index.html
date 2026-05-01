@@ -532,17 +532,6 @@
           </div>
           <div
             class="sidebar-item"
-            data-page="acesso"
-            onclick="App.showPage('acesso')"
-          >
-            <svg viewBox="0 0 24 24">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <polyline points="16 11 18 13 22 9" /></svg
-            >Controle de Acesso
-          </div>
-          <div
-            class="sidebar-item"
             data-page="relatorios"
             onclick="App.showPage('relatorios')"
           >
@@ -716,161 +705,8 @@
                   </table>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-header">
-                  <div>
-                    <div class="card-title">Controle de Acesso</div>
-                    <div class="card-subtitle">Registros recentes</div>
-                  </div>
-                  <button
-                    class="btn btn-secondary btn-sm"
-                    onclick="Modals.openAcesso()"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    >
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" /></svg
-                    >Registrar
-                  </button>
-                </div>
-                <div class="search-bar">
-                  <svg viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" /></svg
-                  ><input
-                    type="text"
-                    placeholder="Pesquisar..."
-                    oninput="
-                      PageDashboard.renderAccessList(
-                        undefined,
-                        this.value,
-                      )
-                    "
-                  />
-                </div>
-                <div id="d-access-list"></div>
-                <div class="pagination" id="d-access-pagination"></div>
-              </div>
             </div>
             <div class="dash-bottom">
-              <div class="card">
-                <div class="card-header">
-                  <span class="card-title">Acessos — 9 dias</span
-                  ><span class="badge badge-gray">Últimos registros</span>
-                </div>
-                <div
-                  style="
-                    display: flex;
-                    gap: 18px;
-                    padding: 16px;
-                    align-items: flex-end;
-                  "
-                >
-                  <div style="flex: 1">
-                    <div
-                      class="bar-chart"
-                      id="d-big-chart"
-                      style="height: 105px"
-                    ></div>
-                    <div class="chart-labels">
-                      <span>Ter</span><span>Qua</span><span>Qui</span
-                      ><span>Sex</span><span>Sáb</span><span>Dom</span
-                      ><span>Seg</span><span>Ter</span><span>Qua</span>
-                    </div>
-                  </div>
-                  <div
-                    style="
-                      display: flex;
-                      flex-direction: column;
-                      gap: 10px;
-                      min-width: 180px;
-                    "
-                  >
-                    <div
-                      style="
-                        padding: 14px;
-                        background: var(--green-bg);
-                        border-radius: var(--r);
-                        border: 1px solid var(--green-border);
-                        text-align: center;
-                      "
-                    >
-                      <div
-                        style="
-                          font-size: 11px;
-                          color: var(--green);
-                          font-weight: 600;
-                          text-transform: uppercase;
-                          letter-spacing: 0.05em;
-                        "
-                      >
-                        Entradas Hoje
-                      </div>
-                      <div
-                        style="
-                          font-size: 28px;
-                          font-weight: 700;
-                          color: var(--green);
-                          margin-top: 4px;
-                        "
-                        id="d-entradas-hoje"
-                      >
-                        0
-                      </div>
-                      <div
-                        style="
-                          font-size: 11px;
-                          color: var(--green);
-                          opacity: 0.7;
-                        "
-                      >
-                        unidades recebidas
-                      </div>
-                    </div>
-                    <div
-                      style="
-                        padding: 14px;
-                        background: var(--red-bg);
-                        border-radius: var(--r);
-                        border: 1px solid var(--red-border);
-                        text-align: center;
-                      "
-                    >
-                      <div
-                        style="
-                          font-size: 11px;
-                          color: var(--red);
-                          font-weight: 600;
-                          text-transform: uppercase;
-                          letter-spacing: 0.05em;
-                        "
-                      >
-                        Saídas na Semana
-                      </div>
-                      <div
-                        style="
-                          font-size: 28px;
-                          font-weight: 700;
-                          color: var(--red);
-                          margin-top: 4px;
-                        "
-                        id="d-saidas-semana"
-                      >
-                        0
-                      </div>
-                      <div
-                        style="font-size: 11px; color: var(--red); opacity: 0.7"
-                      >
-                        unidades retiradas
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
               <div class="card">
                 <div class="card-header">
                   <span class="card-title">Atividades Recentes</span>
@@ -1279,45 +1115,7 @@
               <div id="rel-hist" class="tbl-wrap"></div>
             </div>
           </div>
-
-          <!-- ACESSO -->
-          <div class="page" id="page-acesso">
-            <div class="page-hdr">
-              <div>
-                <div class="page-hdr-title">Controle de Acesso</div>
-                <div class="page-hdr-sub">
-                  Registro de entrada e saída de pessoas
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="Modals.openAcesso()">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" /></svg
-                >Registrar Acesso
-              </button>
-            </div>
-            <div class="page-card">
-              <div class="search-bar">
-                <svg viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" /></svg
-                ><input
-                  type="text"
-                  id="ac-search"
-                  placeholder="Pesquisar..."
-                  oninput="PageAcesso.render(this.value)"
-                />
-              </div>
-              <div id="ac-table" class="tbl-wrap"></div>
-            </div>
-          </div>
-
-          <!-- USUÁRIOS -->
+<!-- USUÁRIOS -->
           <div class="page" id="page-usuarios">
             <div class="page-hdr">
               <div>
@@ -1941,68 +1739,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal Acesso -->
-    <div class="modal-overlay" id="modal-acesso">
-      <div class="modal">
-        <div class="modal-header">
-          <span class="modal-title">Registrar Acesso</span
-          ><button
-            class="modal-close"
-            onclick="Utils.closeModal('modal-acesso')"
-          >
-            ✕
-          </button>
-        </div>
-        <div class="form-grid">
-          <div class="form-group full">
-            <label class="form-label">Nome *</label
-            ><input
-              type="text"
-              class="form-input"
-              id="m-ac-nome"
-              placeholder="Nome completo"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tipo</label
-            ><select class="form-input" id="m-ac-tipo">
-              <option value="Entrada">Entrada</option>
-              <option value="Saida">Saída</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cargo</label
-            ><input
-              type="text"
-              class="form-input"
-              id="m-ac-cargo"
-              placeholder="Ex: Motorista"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Horário</label
-            ><input type="time" class="form-input" id="m-ac-hora" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Data</label
-            ><input type="date" class="form-input" id="m-ac-data" />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button
-            class="btn btn-secondary"
-            onclick="Utils.closeModal('modal-acesso')"
-          >
-            Cancelar</button
-          ><button class="btn btn-primary" onclick="Modals.saveAcesso()">
-            Registrar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal Funcionário -->
+<!-- Modal Funcionário -->
     <div class="modal-overlay" id="modal-funcionario">
       <div class="modal">
         <div class="modal-header">

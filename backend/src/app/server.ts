@@ -13,7 +13,6 @@ import { itemsRoutes } from "../modules/inventory/items.routes";
 import { entradasRoutes } from "../modules/stock-movements/entradas.routes";
 import { saidasRoutes } from "../modules/stock-movements/saidas.routes";
 import { ajustesRoutes } from "../modules/stock-movements/ajustes.routes";
-import { acessosRoutes } from "../modules/acessos/routes";
 import { reportsRoutes } from "../modules/reports/reports.routes";
 import { auditRoutes } from "../modules/audit/audit.routes";
 import { healthRoutes } from "../infra/healthcheck";
@@ -89,7 +88,6 @@ export async function buildApp() {
       await api.register(entradasRoutes, { prefix: "/entradas" });
       await api.register(saidasRoutes, { prefix: "/saidas" });
       await api.register(ajustesRoutes, { prefix: "/ajustes" });
-      await api.register(acessosRoutes, { prefix: "/acessos" });
       await api.register(reportsRoutes, { prefix: "/reports" });
       await api.register(auditRoutes, { prefix: "/audit" });
     },

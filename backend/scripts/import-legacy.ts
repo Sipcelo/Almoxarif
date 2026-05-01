@@ -255,7 +255,10 @@ export async function runLegacyImport(filePath: string, options: RunOptions): Pr
     });
     existingFuncionarios.forEach((row) => funcionarioMap.set(normalizeKey(row.nome), row));
 
-    const existingUsers = await tx.user.findMany({ select: { id: true, nome: true, email: true } });
+    const existingUsers = await tx.user.findMany({
+      orderBy: { email: "asc" },
+      select: { id: true, nome: true, email: true },
+    });
     existingUsers.forEach((row) => {
       const emailKey = normalizeKey(row.email);
       userByEmail.set(emailKey, row);

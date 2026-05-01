@@ -146,8 +146,6 @@ const Utils = {
           listAll((params) => apiClient.depositos.list(params), "depositos"),
           listAll((params) => apiClient.setores.list(params), "setores"),
         ]);
-
-      const acessos = await PageAcesso.fetchAll();
       const data = {
         users: usersRaw.map((u) => ({
           id: u.id,
@@ -166,7 +164,6 @@ const Utils = {
         items: dadosRelatorios.items || [],
         entradas: dadosRelatorios.entradas || [],
         saidas: dadosRelatorios.saidas || [],
-        acessos,
         categorias: categoriasRaw.map((c) => c.nome).filter(Boolean),
         depositos: depositosRaw.map((d) => d.nome).filter(Boolean),
         setores: setoresRaw.map((s) => s.nome).filter(Boolean),

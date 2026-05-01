@@ -1,6 +1,8 @@
 # SDD-004 Addendum A - Modulo de Acessos
 
-Status: aprovado e implementado
+> **SUPERADO em 2026-05-01:** Controle de Acesso/Ponto saiu do escopo final porque sera atendido por sistema externo. Este documento permanece apenas como historico; a implementacao ativa foi removida.
+
+Status: superado por decisao de escopo final em 2026-05-01
 Data: 2026-04-18
 
 ## 1. Entendimento

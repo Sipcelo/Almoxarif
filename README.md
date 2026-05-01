@@ -1,6 +1,6 @@
 # Almoxarifado — Sistema de Gestão v2.0
 
-Sistema completo de gestão de almoxarifado com tela de login, controle de estoque, entradas, saídas e controle de acesso.
+Sistema completo de gestão de almoxarifado com tela de login, controle de estoque, entradas, saídas, funcionários e relatórios.
 
 ---
 
@@ -25,7 +25,7 @@ almoxarifado/
     ├── app.js              ← Controlador principal, navegação, boot
     └── pages/
         ├── dashboard.js    ← Renderização do Dashboard
-        └── pages.js        ← Estoque, Entradas, Saídas, Acesso, Config, Relatórios
+        └── pages.js        ← Estoque, Entradas, Saídas, Funcionários, Config, Relatórios
 ```
 
 ---
@@ -86,7 +86,6 @@ Todos os dados são armazenados no **localStorage** do navegador.
 - ✅ Registro de entradas com responsável e observação
 - ✅ Registro de saídas com validação de quantidade
 - ✅ Alerta visual quando item abaixo do mínimo
-- ✅ Controle de acesso (entrada/saída de pessoas)
 - ✅ Relatórios e histórico de movimentações
 - ✅ Categorias e depósitos configuráveis
 - ✅ Exportação de dados em JSON

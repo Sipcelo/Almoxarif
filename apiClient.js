@@ -166,10 +166,6 @@
       list: (params) => http("GET", `/ajustes${qs(params)}`),
       create: (payload) => http("POST", "/ajustes", payload),
     },
-    acessos: {
-      list: (params) => http("GET", `/acessos${qs(params)}`),
-      create: (payload) => http("POST", "/acessos", payload),
-    },
     health: () => http("GET", "/health"),
   };
 

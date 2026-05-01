@@ -1,11 +1,9 @@
 /* ============================================================
    Almox - Painel Inicial v6 (SDD-004 PR-3 debt cleanup)
-   Dados de cards, acessos, atividades e graficos vindos do backend.
+   Dados de cards, atividades e graficos vindos do backend.
    ============================================================ */
 const PageDashboard = {
-  accessPage: 1,
   _renderToken: 0,
-  _latestAccesses: [],
 
   async render() {
     const token = ++this._renderToken;
@@ -34,29 +32,10 @@ const PageDashboard = {
     this._renderStats(items, entradas, saidas, funcs, setores);
     this._renderTopItems(items);
 
-    const acessos = this._buildAccesses(entradas, saidas);
-    this._latestAccesses = acessos;
-    this.renderAccessList(acessos);
-
     this.renderChart("d-mini-chart", this._buildDailySeries(entradas, 9), 65);
-    this.renderChart("d-big-chart", this._buildDailySeries(saidas, 9), 105);
 
     const activities = this._buildActivities(entradas, saidas, ajustes);
     this._renderActivities(activities);
-
-    const de7d = daysAgo(7);
-    const hoje = today();
-    const saidas7 = saidas
-      .filter((s) => isoDate(s.data) >= de7d)
-      .reduce((sum, row) => sum + Number(row.qtd || 0), 0);
-    const entHoje = entradas
-      .filter((e) => isoDate(e.data) === hoje)
-      .reduce((sum, row) => sum + Number(row.qtd || 0), 0);
-
-    const sSem = document.getElementById("d-saidas-semana");
-    if (sSem) sSem.textContent = String(saidas7);
-    const eHoje = document.getElementById("d-entradas-hoje");
-    if (eHoje) eHoje.textContent = String(entHoje);
   },
 
   _renderSkeleton() {
@@ -195,26 +174,6 @@ const PageDashboard = {
     return "-";
   },
 
-  _buildAccesses(entradas, saidas) {
-    const fromEntradas = entradas.map((entrada) => ({
-      nome: this._entradaActor(entrada),
-      tipo: "Entrada",
-      hora: this._timeOnly(entrada.data),
-      data: isoDate(entrada.data),
-      _ts: this._ts(entrada.data),
-    }));
-
-    const fromSaidas = saidas.map((saida) => ({
-      nome: this._saidaActor(saida),
-      tipo: "Saida",
-      hora: this._timeOnly(saida.data),
-      data: isoDate(saida.data),
-      _ts: this._ts(saida.data),
-    }));
-
-    return [...fromEntradas, ...fromSaidas].sort((a, b) => b._ts - a._ts);
-  },
-
   _buildActivities(entradas, saidas, ajustes) {
     const entradaActivities = entradas.map((entrada) => {
       const itemNome = this._itemNome(entrada.item, entrada.itemId);
@@ -343,40 +302,6 @@ const PageDashboard = {
       </div>`
         )
         .join("") || Utils.emptyState();
-  },
-
-  renderAccessList(acessos = this._latestAccesses, filter = "") {
-    const f = filter.toLowerCase();
-    const filtered = acessos.filter((a) => {
-      const name = (a && a.nome) || "";
-      return !f || name.toLowerCase().includes(f);
-    });
-    const perPage = 4;
-    const total = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(total / perPage));
-    if (this.accessPage > totalPages) this.accessPage = 1;
-
-    const slice = filtered.slice((this.accessPage - 1) * perPage, this.accessPage * perPage);
-    document.getElementById("d-access-list").innerHTML =
-      slice
-        .map(
-          (a) => `
-      <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border);">
-        ${Utils.avatarHtml(a.nome, "md")}
-        <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">${a.nome} <span style="color:var(--text-3);font-size:12px;">${a.hora}</span></div>
-          <span class="badge ${a.tipo === "Entrada" ? "badge-green" : "badge-red"} badge-dot">${a.tipo}</span>
-        </div>
-        <div style="text-align:right;flex-shrink:0;font-size:11.5px;color:var(--text-3);">${Utils.relDate(a.data)}</div>
-      </div>`
-        )
-        .join("") || Utils.emptyState();
-
-    document.getElementById("d-access-pagination").innerHTML = `
-      <button class="page-btn" onclick="PageDashboard.accessPage=1;PageDashboard.renderAccessList(PageDashboard._latestAccesses)">«</button>
-      <button class="page-btn" onclick="if(PageDashboard.accessPage>1){PageDashboard.accessPage--;PageDashboard.renderAccessList(PageDashboard._latestAccesses)}">‹</button>
-      <span class="page-info">${this.accessPage}/${totalPages}</span>
-      <button class="page-btn" onclick="if(PageDashboard.accessPage<${totalPages}){PageDashboard.accessPage++;PageDashboard.renderAccessList(PageDashboard._latestAccesses)}">›</button>
-      <button class="page-btn" onclick="PageDashboard.accessPage=${totalPages};PageDashboard.renderAccessList(PageDashboard._latestAccesses)">»</button>`;
   },
 
   renderChart(id, data, h) {

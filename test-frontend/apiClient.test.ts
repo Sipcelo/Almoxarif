@@ -41,7 +41,6 @@ declare global {
     entradas: ListCreate;
     saidas: ListCreate;
     ajustes: ListCreate;
-    acessos: ListCreate;
     health: () => Promise<unknown>;
   };
 }
@@ -122,7 +121,7 @@ describe("apiClient — CSRF + transport", () => {
     expect(globalThis.apiClient.ApiError).toBeTypeOf("function");
     expect(globalThis.apiClient.auth.login).toBeTypeOf("function");
     expect(globalThis.apiClient.users.create).toBeTypeOf("function");
-    expect(globalThis.apiClient.acessos.create).toBeTypeOf("function");
+    expect(globalThis.apiClient.ajustes.create).toBeTypeOf("function");
   });
 
   it("_csrfFromCookie lê cookie almox_csrf", () => {

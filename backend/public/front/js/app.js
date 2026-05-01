@@ -67,7 +67,7 @@ const App = {
 
     const titles = {
       painel:'Painel Inicial', estoque:'Em Estoque', entradas:'Entradas',
-      saidas:'Saídas', relatorios:'Relatórios', acesso:'Controle de Acesso',
+      saidas:'Saídas', relatorios:'Relatórios',
       funcionarios:'Funcionários', usuarios:'Usuários', configuracoes:'Configurações',
     };
     document.getElementById('topbar-title').textContent      = titles[name] || 'Almox';
@@ -79,7 +79,6 @@ const App = {
       entradas:      () => PageEntradas.render(),
       saidas:        () => PageSaidas.render(),
       relatorios:    () => PageRelatorios.render(),
-      acesso:        () => PageAcesso.render(),
       funcionarios:  () => PageFuncionarios.render(),
       usuarios:      () => PageUsuarios.render(),
       configuracoes: () => PageConfig.render(),
@@ -281,7 +280,7 @@ const App = {
 
   globalSearch(v) {
     if(!v)return;
-    ({estoque:()=>PageEstoque.render(v),entradas:()=>PageEntradas.render(v),saidas:()=>PageSaidas.render(v),acesso:()=>PageAcesso.render(v),funcionarios:()=>PageFuncionarios.render(v)})[this.currentPage]?.();
+    ({estoque:()=>PageEstoque.render(v),entradas:()=>PageEntradas.render(v),saidas:()=>PageSaidas.render(v),funcionarios:()=>PageFuncionarios.render(v)})[this.currentPage]?.();
   },
 };
 

@@ -9,7 +9,7 @@ const DB = {
 };
 
 const PERMISSIONS = {
-  admin:    ['painel','estoque','entradas','saidas','relatorios','acesso','funcionarios','usuarios','configuracoes'],
+  admin:    ['painel','estoque','entradas','saidas','relatorios','funcionarios','usuarios','configuracoes'],
   gerente:  ['painel','estoque','entradas','saidas','relatorios','funcionarios'],
   operador: ['painel','estoque','entradas','saidas'],
   visitante:['painel'],
@@ -62,12 +62,6 @@ const SEED = {
     {id:4, itemId:6, itemNome:'Papel Sulfite A4',         itemCodigo:'PAP001', qtd:3, valorUnit:28.00, data:daysAgo(8),  funcId:3, funcNome:'Marina Rodrigues',setor:'Operações',      obs:''},
     {id:5, itemId:2, itemNome:'Teclado Sem Fio',          itemCodigo:'INF001', qtd:1, valorUnit:120.00,data:daysAgo(12), funcId:2, funcNome:'Daniel Santos',   setor:'TI',             obs:'Substituição'},
   ],
-  acessos: [
-    {id:1, nome:'Elisa Gomes',      tipo:'Entrada', hora:'08:40', data:today(),    cargo:'Assistente'},
-    {id:2, nome:'Daniel Santos',    tipo:'Entrada', hora:'07:57', data:daysAgo(1), cargo:'Técnico'},
-    {id:3, nome:'Marina Rodrigues', tipo:'Entrada', hora:'09:15', data:daysAgo(1), cargo:'Supervisora'},
-    {id:4, nome:'Carlos Pereira',   tipo:'Entrada', hora:'07:53', data:today(),    cargo:'Motorista'},
-  ],
 };
 
 function initStore() {
@@ -75,7 +69,6 @@ function initStore() {
   if (!DB.get('items'))        DB.set('items',        SEED.items);
   if (!DB.get('entradas'))     DB.set('entradas',     SEED.entradas);
   if (!DB.get('saidas'))       DB.set('saidas',       SEED.saidas);
-  if (!DB.get('acessos'))      DB.set('acessos',      SEED.acessos);
   if (!DB.get('categorias'))   DB.set('categorias',   SEED.categorias);
   if (!DB.get('depositos'))    DB.set('depositos',    SEED.depositos);
   if (!DB.get('funcionarios')) DB.set('funcionarios', SEED.funcionarios);
@@ -91,8 +84,6 @@ const Store = {
   setEntradas(v)    { return DB.set('entradas', v); },
   getSaidas()       { return DB.get('saidas')       || []; },
   setSaidas(v)      { return DB.set('saidas', v); },
-  getAcessos()      { return DB.get('acessos')      || []; },
-  setAcessos(v)     { return DB.set('acessos', v); },
   getCategorias()   { return DB.get('categorias')   || []; },
   setCategorias(v)  { return DB.set('categorias', v); },
   getDepositos()    { return DB.get('depositos')    || []; },
