@@ -273,6 +273,13 @@ select.form-input { cursor: pointer; }
   box-shadow: var(--shadow-lg);
   animation: slideUp 0.22s ease;
 }
+.modal-wide { max-width: min(760px, calc(100vw - 32px)); }
+.modal-item .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.modal-item select.form-input { min-width: 0; }
+@media (max-width: 640px) {
+  .modal-wide { max-width: calc(100vw - 24px); }
+  .modal-item .form-grid { grid-template-columns: 1fr; }
+}
 .modal-header {
   padding: 18px 22px 14px;
   border-bottom: 1px solid var(--border);
