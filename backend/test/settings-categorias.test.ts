@@ -28,19 +28,19 @@ beforeEach(async () => {
 });
 
 describe("Settings — Categorias", () => {
-  it("cria categoria com nome normalizado", async () => {
+  it("cria categoria com nome normalizado (Title Case)", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/settings/categorias",
       headers: { cookie: adminCookie },
-      payload: { nome: "  Ferramentas  " },
+      payload: { nome: "  ferramentas  " },
     });
     expect(res.statusCode).toBe(201);
-    expect(res.json().categoria.nome).toBe("ferramentas");
+    expect(res.json().categoria.nome).toBe("Ferramentas");
   });
 
   it("409 em nome duplicado (case-insensitive)", async () => {
-    await seedCategoria("epi");
+    await seedCategoria("Epi");
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/settings/categorias",

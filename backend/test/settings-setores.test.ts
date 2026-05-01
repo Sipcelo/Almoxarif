@@ -28,19 +28,19 @@ beforeEach(async () => {
 });
 
 describe("Settings — Setores", () => {
-  it("cria setor com nome normalizado (lowercase)", async () => {
+  it("cria setor com nome normalizado (Title Case)", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/settings/setores",
       headers: { cookie: adminCookie },
-      payload: { nome: "  Diretoria  " },
+      payload: { nome: "  diretoria  " },
     });
     expect(res.statusCode).toBe(201);
-    expect(res.json().setor.nome).toBe("diretoria");
+    expect(res.json().setor.nome).toBe("Diretoria");
   });
 
   it("409 em nome duplicado (case-insensitive)", async () => {
-    await seedSetor("financeiro");
+    await seedSetor("Financeiro");
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/settings/setores",
@@ -51,7 +51,7 @@ describe("Settings — Setores", () => {
   });
 
   it("atualiza nome do setor (200)", async () => {
-    const s = await seedSetor("antigo");
+    const s = await seedSetor("Antigo");
     const res = await app.inject({
       method: "PUT",
       url: `/api/v1/settings/setores/${s.id}`,
@@ -59,7 +59,7 @@ describe("Settings — Setores", () => {
       payload: { nome: "NOVO" },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json().setor.nome).toBe("novo");
+    expect(res.json().setor.nome).toBe("Novo");
   });
 
   it("409 ao desativar setor com funcionários ativos", async () => {

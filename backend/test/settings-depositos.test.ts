@@ -28,19 +28,19 @@ beforeEach(async () => {
 });
 
 describe("Settings — Depositos", () => {
-  it("cria deposito com nome normalizado", async () => {
+  it("cria deposito com nome normalizado (Title Case)", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/settings/depositos",
       headers: { cookie: adminCookie },
-      payload: { nome: "  Galpão Central  " },
+      payload: { nome: "  galpão central  " },
     });
     expect(res.statusCode).toBe(201);
-    expect(res.json().deposito.nome).toBe("galpão central");
+    expect(res.json().deposito.nome).toBe("Galpão Central");
   });
 
   it("409 em nome duplicado", async () => {
-    await seedDeposito("anexo");
+    await seedDeposito("Anexo");
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/settings/depositos",
