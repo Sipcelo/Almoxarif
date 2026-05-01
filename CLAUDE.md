@@ -542,3 +542,22 @@ Para tarefas multi-passo, declare plano breve:
 ```
 
 Critérios fortes de sucesso permitem iterar de forma independente. Critérios fracos ("fazer funcionar") exigem clarificação constante.
+
+## Encoding e caracteres especiais
+
+- Todos os arquivos do projeto devem ser salvos em UTF-8.
+- Evite inserir caracteres Unicode literais em código JavaScript/TypeScript/HTML template strings.
+- Para placeholders visuais, use constantes ASCII-safe:
+  - EMPTY_DASH = '\u2014'
+  - ELLIPSIS = '\u2026'
+- Nunca usar textos corrompidos como:
+  - â€”
+  - â€œ
+  - â€
+  - â€¦
+  - Ã§
+  - Ã£
+  - Ã©
+- Antes de finalizar alterações, procurar por padrões de mojibake no código.
+- Em HTML, garantir `<meta charset="UTF-8">`.
+- Preferir entidades HTML ou escapes Unicode quando o caractere for decorativo.

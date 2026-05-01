@@ -21,7 +21,10 @@
       "Bash(npx vitest *)",
       "Read(//tmp/**)",
       "Bash(DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\" npx prisma db push --force-reset --accept-data-loss)",
-      "Bash(tee /tmp/vitest-final.log)"
+      "Bash(tee /tmp/vitest-final.log)",
+      "Bash(export DATABASE_URL=\"postgresql://postgres:123456@localhost:5432/almox_test\")",
+      "Bash(gh pr create --title 'SDD-004 PR-2: apiClient + refactor login \\(231/231 tests\\)' --body ' *)",
+      "Bash(env)"
     ]
   }
 }
