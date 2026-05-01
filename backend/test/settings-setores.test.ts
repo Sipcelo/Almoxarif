@@ -56,10 +56,32 @@ describe("Settings — Setores", () => {
       method: "PUT",
       url: `/api/v1/settings/setores/${s.id}`,
       headers: { cookie: adminCookie },
-      payload: { nome: "NOVO" },
+      payload: { nome: "novo setor" },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json().setor.nome).toBe("Novo");
+    expect(res.json().setor.nome).toBe("Novo Setor");
+  });
+
+  it("preserva acronimos (EPI fica EPI, nao Epi)", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/settings/setores",
+      headers: { cookie: adminCookie },
+      payload: { nome: "EPI" },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json().setor.nome).toBe("EPI");
+  });
+
+  it("capitaliza palavras separadas por barra", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/settings/setores",
+      headers: { cookie: adminCookie },
+      payload: { nome: "copa/cozinha" },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json().setor.nome).toBe("Copa/Cozinha");
   });
 
   it("409 ao desativar setor com funcionários ativos", async () => {

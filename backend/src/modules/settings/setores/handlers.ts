@@ -66,7 +66,9 @@ export const createSetorHandler = async (req: FastifyRequest, reply: FastifyRepl
   const data = createSetorSchema.parse(req.body);
   const nome = normalizeName(data.nome);
 
-  const existing = await prisma.setor.findUnique({ where: { nome } });
+  const existing = await prisma.setor.findFirst({
+    where: { nome: { equals: nome, mode: "insensitive" } },
+  });
   if (existing) throw AppError.conflict("Setor com esse nome já existe");
 
   const setor = await prisma.setor.create({
@@ -96,13 +98,13 @@ export const updateSetorHandler = async (req: FastifyRequest, reply: FastifyRepl
 
   if (data.nome !== undefined) {
     const novoNome = normalizeName(data.nome);
-    if (novoNome !== target.nome) {
-      const clash = await prisma.setor.findUnique({ where: { nome: novoNome } });
+    if (novoNome.toLowerCase() !== target.nome.toLowerCase()) {
+      const clash = await prisma.setor.findFirst({
+        where: { nome: { equals: novoNome, mode: "insensitive" }, id: { not: id } },
+      });
       if (clash) throw AppError.conflict("Setor com esse nome já existe");
-      data.nome = novoNome;
-    } else {
-      data.nome = novoNome;
     }
+    data.nome = novoNome;
   }
 
   if (data.ativo === false && target.ativo) {

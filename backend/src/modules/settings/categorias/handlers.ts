@@ -59,7 +59,9 @@ export const createCategoriaHandler = async (req: FastifyRequest, reply: Fastify
   const data = createCategoriaSchema.parse(req.body);
   const nome = normalizeName(data.nome);
 
-  const existing = await prisma.categoria.findUnique({ where: { nome } });
+  const existing = await prisma.categoria.findFirst({
+    where: { nome: { equals: nome, mode: "insensitive" } },
+  });
   if (existing) throw AppError.conflict("Categoria com esse nome já existe");
 
   const categoria = await prisma.categoria.create({
@@ -89,8 +91,10 @@ export const updateCategoriaHandler = async (req: FastifyRequest, reply: Fastify
 
   if (data.nome !== undefined) {
     const novoNome = normalizeName(data.nome);
-    if (novoNome !== target.nome) {
-      const clash = await prisma.categoria.findUnique({ where: { nome: novoNome } });
+    if (novoNome.toLowerCase() !== target.nome.toLowerCase()) {
+      const clash = await prisma.categoria.findFirst({
+        where: { nome: { equals: novoNome, mode: "insensitive" }, id: { not: id } },
+      });
       if (clash) throw AppError.conflict("Categoria com esse nome já existe");
     }
     data.nome = novoNome;

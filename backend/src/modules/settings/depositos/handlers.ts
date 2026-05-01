@@ -59,7 +59,9 @@ export const createDepositoHandler = async (req: FastifyRequest, reply: FastifyR
   const data = createDepositoSchema.parse(req.body);
   const nome = normalizeName(data.nome);
 
-  const existing = await prisma.deposito.findUnique({ where: { nome } });
+  const existing = await prisma.deposito.findFirst({
+    where: { nome: { equals: nome, mode: "insensitive" } },
+  });
   if (existing) throw AppError.conflict("Depósito com esse nome já existe");
 
   const deposito = await prisma.deposito.create({
@@ -89,8 +91,10 @@ export const updateDepositoHandler = async (req: FastifyRequest, reply: FastifyR
 
   if (data.nome !== undefined) {
     const novoNome = normalizeName(data.nome);
-    if (novoNome !== target.nome) {
-      const clash = await prisma.deposito.findUnique({ where: { nome: novoNome } });
+    if (novoNome.toLowerCase() !== target.nome.toLowerCase()) {
+      const clash = await prisma.deposito.findFirst({
+        where: { nome: { equals: novoNome, mode: "insensitive" }, id: { not: id } },
+      });
       if (clash) throw AppError.conflict("Depósito com esse nome já existe");
     }
     data.nome = novoNome;
