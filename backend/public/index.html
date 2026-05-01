@@ -1507,6 +1507,29 @@
         <div class="form-grid">
           <input type="hidden" id="m-item-id" />
           <div class="form-group">
+            <label class="form-label">Categoria *</label
+            ><select
+              class="form-input"
+              id="m-item-cat"
+              onchange="Modals.updateItemCategoryContext()"
+            ></select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Depósito *</label
+            ><select
+              class="form-input"
+              id="m-item-dep"
+              onchange="Modals.markItemDepositoTouched()"
+            ></select>
+            <span class="form-hint" id="m-item-dep-hint"></span>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Itens já cadastrados nesta categoria</label>
+            <div class="item-category-context" id="m-item-category-context">
+              Selecione uma categoria para ver os itens relacionados.
+            </div>
+          </div>
+          <div class="form-group">
             <label class="form-label">Código do Produto</label
             ><input
               type="text"
@@ -1535,14 +1558,6 @@
               id="m-item-desc"
               placeholder="Ex: Cabo USB para Impressora"
             />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Categoria *</label
-            ><select class="form-input" id="m-item-cat"></select>
-          </div>
-          <div class="form-group full">
-            <label class="form-label">Depósito *</label
-            ><select class="form-input" id="m-item-dep"></select>
           </div>
           <div class="form-group">
             <label class="form-label">Quantidade Inicial</label

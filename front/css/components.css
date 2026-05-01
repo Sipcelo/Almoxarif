@@ -276,9 +276,50 @@ select.form-input { cursor: pointer; }
 .modal-wide { max-width: min(760px, calc(100vw - 32px)); }
 .modal-item .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .modal-item select.form-input { min-width: 0; }
+.item-category-context {
+  min-height: 44px;
+  max-height: 144px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+.item-context-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 96px) minmax(0, 1fr) minmax(72px, auto);
+  gap: 10px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+}
+.item-context-row:last-child { border-bottom: 0; }
+.item-context-code {
+  font-family: var(--mono);
+  color: var(--text);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.item-context-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-context-stock {
+  color: var(--text-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
 @media (max-width: 640px) {
   .modal-wide { max-width: calc(100vw - 24px); }
   .modal-item .form-grid { grid-template-columns: 1fr; }
+  .item-context-row { grid-template-columns: minmax(64px, 84px) minmax(0, 1fr); }
+  .item-context-stock { grid-column: 2; }
 }
 .modal-header {
   padding: 18px 22px 14px;

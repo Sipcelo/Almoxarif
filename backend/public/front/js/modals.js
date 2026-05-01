@@ -3,7 +3,8 @@
    ============================================================ */
 
 const Modals = {  // ---- ITEM ----
-  _itemCatalog: { categorias: [], depositos: [] },
+  _itemCatalog: { categorias: [], depositos: [], items: [] },
+  _itemDepositoTouched: false,
   _entradaItems: [],
   _saidaItems: [],
   _saidaFuncionarios: [],
@@ -45,6 +46,24 @@ const Modals = {  // ---- ITEM ----
     return String(v || '').trim().toLowerCase();
   },
 
+  _normalizeSearch(v) {
+    return String(v || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  },
+
+  _escapeHtml(v) {
+    return String(v || '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[ch]));
+  },
+
   _findByName(rows, nome) {
     const key = this._normalizeName(nome);
     return rows.find((r) => this._normalizeName(r.nome) === key) || null;
@@ -64,6 +83,7 @@ const Modals = {  // ---- ITEM ----
       minimo: Number(raw.minimo || 0),
       valor: Number(raw.valorAtual || 0),
       obs: raw.obs || '',
+      ativo: raw.ativo !== false,
     };
   },
 
@@ -99,12 +119,81 @@ const Modals = {  // ---- ITEM ----
     return parsed.toISOString();
   },
 
+  _suggestDepositoForCategoria(categoriaNome) {
+    const key = this._normalizeSearch(categoriaNome);
+    const rules = [
+      { terms: ['limpeza', 'higiene'], code: 'dep-003' },
+      { terms: ['informatica'], code: 'dep-004' },
+      { terms: ['expediente'], code: 'dep-005' },
+      { terms: ['copa', 'cozinha'], code: 'dep-006' },
+      { terms: ['manutencao'], code: 'dep-007' },
+      { terms: ['epi', 'seguranca'], code: 'dep-008' },
+      { terms: ['recepcao', 'operacional', 'embalagem', 'armazenagem', 'utensilios', 'gerais'], code: 'dep-001' },
+    ];
+    const match = rules.find((rule) => rule.terms.some((term) => key.includes(term)));
+    if (!match) return null;
+    return this._itemCatalog.depositos.find((d) => this._normalizeSearch(d.nome).includes(match.code)) || null;
+  },
+
+  _renderItemCategoryContext(categoriaNome) {
+    const el = document.getElementById('m-item-category-context');
+    if (!el) return;
+    const categoria = this._findByName(this._itemCatalog.categorias, categoriaNome);
+    if (!categoriaNome || !categoria) {
+      el.textContent = 'Selecione uma categoria para ver os itens relacionados.';
+      return;
+    }
+    const rows = this._itemCatalog.items
+      .map((row) => this._normalizeItem(row))
+      .filter((row) => row && row.ativo !== false)
+      .filter((row) => row.categoriaId === categoria.id || this._normalizeName(row.categoria) === this._normalizeName(categoria.nome))
+      .sort((a, b) => a.descricao.localeCompare(b.descricao, 'pt-BR'))
+      .slice(0, 30);
+
+    if (!rows.length) {
+      el.textContent = 'Nenhum item cadastrado nesta categoria.';
+      return;
+    }
+
+    el.innerHTML = rows.map((row) => `
+      <div class="item-context-row">
+        <span class="item-context-code">${this._escapeHtml(row.codigo || '-')}</span>
+        <span class="item-context-name" title="${this._escapeHtml(row.descricao)}">${this._escapeHtml(row.descricao)}</span>
+        <span class="item-context-stock">${this._escapeHtml(row.deposito || '')} · ${row.quantidade} un.</span>
+      </div>
+    `).join('');
+  },
+
+  updateItemCategoryContext(options = {}) {
+    const catEl = document.getElementById('m-item-cat');
+    const depEl = document.getElementById('m-item-dep');
+    const hintEl = document.getElementById('m-item-dep-hint');
+    if (!catEl || !depEl) return;
+
+    const suggested = this._suggestDepositoForCategoria(catEl.value);
+    if (suggested && (!this._itemDepositoTouched || options.forceSuggestion)) {
+      depEl.value = suggested.nome;
+    }
+
+    if (hintEl) {
+      hintEl.textContent = suggested
+        ? `Sugestão para esta categoria: ${suggested.nome}`
+        : '';
+    }
+    this._renderItemCategoryContext(catEl.value);
+  },
+
+  markItemDepositoTouched() {
+    this._itemDepositoTouched = true;
+  },
+
   async _loadItemCatalog() {
-    const [categorias, depositos] = await Promise.all([
+    const [categorias, depositos, items] = await Promise.all([
       this._listAll((params) => apiClient.categorias.list(params), 'categorias'),
       this._listAll((params) => apiClient.depositos.list(params), 'depositos'),
+      this._listAll((params) => apiClient.items.list(params), 'items'),
     ]);
-    this._itemCatalog = { categorias, depositos };
+    this._itemCatalog = { categorias, depositos, items };
     return this._itemCatalog;
   },
 
@@ -117,12 +206,14 @@ const Modals = {  // ---- ITEM ----
       }
       Utils.fillSelect('m-item-cat', categorias.map((c) => c.nome));
       Utils.fillSelect('m-item-dep', depositos.map((d) => d.nome));
+      this._itemDepositoTouched = false;
       ['m-item-id','m-item-desc','m-item-codigo','m-item-obs'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
       document.getElementById('m-item-qtd').value='0';
       document.getElementById('m-item-qtd').disabled=false;
       document.getElementById('m-item-min').value='5';
       document.getElementById('m-item-valor').value='0.00';
       document.getElementById('m-item-title').textContent='Novo Item';
+      this.updateItemCategoryContext({ forceSuggestion: true });
       Utils.openModal('modal-item');
     } catch (err) {
       const msg = (err && err.message) || 'Falha ao abrir modal de item.';
@@ -153,6 +244,8 @@ const Modals = {  // ---- ITEM ----
       document.getElementById('m-item-valor').value   = (item.valor||0).toFixed(2);
       document.getElementById('m-item-obs').value     = item.obs||'';
       document.getElementById('m-item-title').textContent='Editar Item';
+      this._itemDepositoTouched = true;
+      this.updateItemCategoryContext();
       Utils.openModal('modal-item');
     } catch (err) {
       const msg = (err && err.message) || 'Falha ao carregar item.';
